@@ -115,9 +115,6 @@ if [ "$install_python" = "y" ]; then
     echo 'eval "$(pyenv init -)"' >> ~/.zshrc
     echo 'eval "$(pyenv virtualenv-init -)"' >> ~/.zshrc
     
-    # Source the updated shell configuration
-    source ~/.zshrc
-    
     # Install Python versions if they don't exist
     if ! pyenv versions | grep -q "3.12.2"; then
         print_step "Installing Python 3.12.2..."
