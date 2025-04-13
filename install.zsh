@@ -392,23 +392,30 @@ defaults delete com.apple.dock persistent-others
 
 # Add applications to Dock
 print_step "Adding applications to Dock..."
-dockutil --add "/System/Applications/Mail.app" --no-restart
-dockutil --add "/Applications/Microsoft Outlook.app" --no-restart
-dockutil --add "/Applications/Spark.app" --no-restart
-dockutil --add "/Applications/Calendars.app" --no-restart
-dockutil --add "/System/Applications/Calendar.app" --no-restart
-dockutil --add "/System/Applications/Messages.app" --no-restart
-dockutil --add "/Applications/Discord.app" --no-restart
-dockutil --add "/Applications/Signal.app" --no-restart
-dockutil --add "/System/Cryptexes/App/System/Applications/Safari.app" --no-restart
-dockutil --add "/System/Applications/Notes.app" --no-restart
-dockutil --add "/Applications/iTerm.app" --no-restart
+dock_item() {
+    printf '<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>%s</string><key>_CFURLStringType</key><integer>15</integer></dict></dict></dict>', "$1"
+}
+
+Mail=$(dock_item "file:///System/Applications/Mail.app/")
+Outlook=$(dock_item "file:///Applications/Microsoft%20Outlook.app/")
+Spark=$(dock_item "file:///Applications/Spark.app/")
+Calendars=$(dock_item "file:///Applications/Calendars.app/")
+Calendar=$(dock_item "file:///System/Applications/Calendar.app/")
+Messages=$(dock_item "file:///System/Applications/Messages.app/")
+Discord=$(dock_item "file:///Applications/Discord.app/")
+Signal=$(dock_item "file:///Applications/Signal.app/")
+Safari=$(dock_item "file:///System/Cryptexes/App/System/Applications/Safari.app/")
+Notes=$(dock_item "file:///System/Applications/Notes.app/")
+iTerm=$(dock_item "file:///Applications/iTerm.app/")
 
 # Add folders to Dock
-print_step "Adding folders to Dock..."
-dockutil --add "/Applications" --view grid --display folder --no-restart
-dockutil --add "~/Documents" --view grid --display folder --no-restart
-dockutil --add "~/Downloads" --view grid --display folder --no-restart
+Applications=$(dock_item "file:///Applications/")
+Documents=$(dock_item "file:///Users/matthammond/Documents/")
+Downloads=$(dock_item "file:///Users/matthammond/Downloads/")
+
+# Set Dock items
+defaults write com.apple.dock persistent-apps -array "$Mail" "$Outlook" "$Spark" "$Calendars" "$Calendar" "$Messages" "$Discord" "$Signal" "$Safari" "$Notes" "$iTerm"
+defaults write com.apple.dock persistent-others -array "$Applications" "$Documents" "$Downloads"
 
 print_success "Dock configured"
 
