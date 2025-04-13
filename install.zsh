@@ -114,15 +114,31 @@ fi
 
 # Get computer name
 print_step "Setting up computer identity..."
-read "name?$(printf "${CYAN}${GEAR} Enter computer name: ${NC}")"
+while true; do
+    read "name?$(printf "${CYAN}${GEAR} Enter computer name: ${NC}")"
+    if [ -z "$name" ]; then
+        print_warning "Computer name cannot be empty. Please try again."
+    else
+        break
+    fi
+done
 
-# Installation options
+# Installation options with defaults
 print_header "Installation Options"
-read "install_python?$(printf "${CYAN}${GEAR} Install Python? (y/n): ${NC}")"
-read "install_ruby?$(printf "${CYAN}${GEAR} Install Ruby? (y/n): ${NC}")"
-read "install_go?$(printf "${CYAN}${GEAR} Install Go? (y/n): ${NC}")"
-read "install_rust?$(printf "${CYAN}${GEAR} Install Rust? (y/n): ${NC}")"
-read "install_pentest_tools?$(printf "${CYAN}${GEAR} Install pentesting tools? (y/n): ${NC}")"
+read "install_python?$(printf "${CYAN}${GEAR} Install Python? (y/n) [y]: ${NC}")"
+install_python=${install_python:-y}
+
+read "install_ruby?$(printf "${CYAN}${GEAR} Install Ruby? (y/n) [n]: ${NC}")"
+install_ruby=${install_ruby:-n}
+
+read "install_go?$(printf "${CYAN}${GEAR} Install Go? (y/n) [n]: ${NC}")"
+install_go=${install_go:-n}
+
+read "install_rust?$(printf "${CYAN}${GEAR} Install Rust? (y/n) [n]: ${NC}")"
+install_rust=${install_rust:-n}
+
+read "install_pentest_tools?$(printf "${CYAN}${GEAR} Install pentesting tools? (y/n) [n]: ${NC}")"
+install_pentest_tools=${install_pentest_tools:-n}
 
 # Setup dotfiles
 print_header "Setting up dotfiles"
@@ -435,6 +451,342 @@ killall Dock
 killall Finder
 print_success "UI changes applied"
 
+# Function to create spaces
+create_spaces() {
+    print_step "Creating spaces..."
+    
+    # Generate UUIDs for the spaces
+    space1_uuid=$(uuidgen)
+    space2_uuid=$(uuidgen)
+    space3_uuid=$(uuidgen)
+    space4_uuid=$(uuidgen)
+    space5_uuid=$(uuidgen)
+    space6_uuid=$(uuidgen)
+    space7_uuid=$(uuidgen)
+    
+    # Create a temporary plist file
+    cat > /tmp/spaces.plist << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>SpacesDisplayConfiguration</key>
+    <dict>
+        <key>Management Data</key>
+        <dict>
+            <key>Age</key>
+            <string>0</string>
+            <key>Management Mode</key>
+            <integer>1</integer>
+            <key>Monitors</key>
+            <array>
+                <dict>
+                    <key>Current Space</key>
+                    <dict>
+                        <key>ManagedSpaceID</key>
+                        <integer>3</integer>
+                        <key>id64</key>
+                        <integer>3</integer>
+                        <key>type</key>
+                        <integer>0</integer>
+                        <key>uuid</key>
+                        <string>${space1_uuid}</string>
+                    </dict>
+                    <key>Display Identifier</key>
+                    <string>Main</string>
+                    <key>Spaces</key>
+                    <array>
+                        <dict>
+                            <key>ManagedSpaceID</key>
+                            <integer>1</integer>
+                            <key>id64</key>
+                            <integer>1</integer>
+                            <key>type</key>
+                            <integer>0</integer>
+                            <key>uuid</key>
+                            <string></string>
+                            <key>wsid</key>
+                            <integer>1</integer>
+                        </dict>
+                        <dict>
+                            <key>ManagedSpaceID</key>
+                            <integer>3</integer>
+                            <key>id64</key>
+                            <integer>3</integer>
+                            <key>type</key>
+                            <integer>0</integer>
+                            <key>uuid</key>
+                            <string>${space1_uuid}</string>
+                        </dict>
+                        <dict>
+                            <key>ManagedSpaceID</key>
+                            <integer>4</integer>
+                            <key>id64</key>
+                            <integer>4</integer>
+                            <key>type</key>
+                            <integer>0</integer>
+                            <key>uuid</key>
+                            <string>${space2_uuid}</string>
+                        </dict>
+                        <dict>
+                            <key>ManagedSpaceID</key>
+                            <integer>5</integer>
+                            <key>id64</key>
+                            <integer>5</integer>
+                            <key>type</key>
+                            <integer>0</integer>
+                            <key>uuid</key>
+                            <string>${space3_uuid}</string>
+                        </dict>
+                        <dict>
+                            <key>ManagedSpaceID</key>
+                            <integer>6</integer>
+                            <key>id64</key>
+                            <integer>6</integer>
+                            <key>type</key>
+                            <integer>0</integer>
+                            <key>uuid</key>
+                            <string>${space4_uuid}</string>
+                        </dict>
+                        <dict>
+                            <key>ManagedSpaceID</key>
+                            <integer>7</integer>
+                            <key>id64</key>
+                            <integer>7</integer>
+                            <key>type</key>
+                            <integer>0</integer>
+                            <key>uuid</key>
+                            <string>${space5_uuid}</string>
+                        </dict>
+                        <dict>
+                            <key>ManagedSpaceID</key>
+                            <integer>8</integer>
+                            <key>id64</key>
+                            <integer>8</integer>
+                            <key>type</key>
+                            <integer>0</integer>
+                            <key>uuid</key>
+                            <string>${space6_uuid}</string>
+                        </dict>
+                        <dict>
+                            <key>ManagedSpaceID</key>
+                            <integer>9</integer>
+                            <key>id64</key>
+                            <integer>9</integer>
+                            <key>type</key>
+                            <integer>0</integer>
+                            <key>uuid</key>
+                            <string>${space7_uuid}</string>
+                        </dict>
+                    </array>
+                </dict>
+            </array>
+            <key>Primary</key>
+            <dict>
+                <key>CreatedCount</key>
+                <integer>0</integer>
+                <key>DeletedCount</key>
+                <integer>0</integer>
+                <key>LifetimeEntryCount</key>
+                <integer>0</integer>
+                <key>LifetimeMax</key>
+                <integer>0</integer>
+                <key>LifetimeMin</key>
+                <integer>0</integer>
+                <key>LifetimeSum</key>
+                <integer>0</integer>
+                <key>PersistedCount</key>
+                <integer>0</integer>
+            </dict>
+            <key>Secondary</key>
+            <dict>
+                <key>CreatedCount</key>
+                <integer>0</integer>
+                <key>DeletedCount</key>
+                <integer>0</integer>
+                <key>LifetimeEntryCount</key>
+                <integer>0</integer>
+                <key>LifetimeMax</key>
+                <integer>0</integer>
+                <key>LifetimeMin</key>
+                <integer>0</integer>
+                <key>LifetimeSum</key>
+                <integer>0</integer>
+                <key>PersistedCount</key>
+                <integer>0</integer>
+            </dict>
+        </dict>
+        <key>Space Properties</key>
+        <array>
+            <dict>
+                <key>name</key>
+                <string></string>
+                <key>windows</key>
+                <array>
+                    <integer>39694</integer>
+                    <integer>10</integer>
+                    <integer>9</integer>
+                    <integer>8</integer>
+                    <integer>7</integer>
+                    <integer>40789</integer>
+                    <integer>74</integer>
+                </array>
+            </dict>
+            <dict>
+                <key>name</key>
+                <string>${space1_uuid}</string>
+                <key>windows</key>
+                <array>
+                    <integer>39694</integer>
+                    <integer>12335</integer>
+                    <integer>8073</integer>
+                    <integer>130</integer>
+                    <integer>131</integer>
+                    <integer>132</integer>
+                    <integer>10</integer>
+                    <integer>9</integer>
+                    <integer>8</integer>
+                    <integer>7</integer>
+                    <integer>40789</integer>
+                    <integer>13430</integer>
+                </array>
+            </dict>
+            <dict>
+                <key>name</key>
+                <string>${space2_uuid}</string>
+                <key>windows</key>
+                <array>
+                    <integer>39694</integer>
+                    <integer>10</integer>
+                    <integer>9</integer>
+                    <integer>8</integer>
+                    <integer>7</integer>
+                    <integer>40789</integer>
+                    <integer>39859</integer>
+                    <integer>78</integer>
+                    <integer>21294</integer>
+                    <integer>21304</integer>
+                    <integer>21301</integer>
+                </array>
+            </dict>
+            <dict>
+                <key>name</key>
+                <string>${space3_uuid}</string>
+                <key>windows</key>
+                <array>
+                    <integer>39694</integer>
+                    <integer>10</integer>
+                    <integer>9</integer>
+                    <integer>8</integer>
+                    <integer>7</integer>
+                    <integer>40789</integer>
+                    <integer>920</integer>
+                    <integer>39563</integer>
+                    <integer>36469</integer>
+                    <integer>40875</integer>
+                    <integer>38732</integer>
+                </array>
+            </dict>
+            <dict>
+                <key>name</key>
+                <string>${space4_uuid}</string>
+                <key>windows</key>
+                <array>
+                    <integer>39694</integer>
+                    <integer>10</integer>
+                    <integer>9</integer>
+                    <integer>8</integer>
+                    <integer>7</integer>
+                    <integer>40789</integer>
+                    <integer>111</integer>
+                </array>
+            </dict>
+            <dict>
+                <key>name</key>
+                <string>${space5_uuid}</string>
+                <key>windows</key>
+                <array>
+                    <integer>39694</integer>
+                    <integer>10</integer>
+                    <integer>9</integer>
+                    <integer>8</integer>
+                    <integer>7</integer>
+                    <integer>40789</integer>
+                    <integer>21779</integer>
+                    <integer>150</integer>
+                    <integer>262</integer>
+                </array>
+            </dict>
+            <dict>
+                <key>name</key>
+                <string>${space6_uuid}</string>
+                <key>windows</key>
+                <array>
+                    <integer>39694</integer>
+                    <integer>10</integer>
+                    <integer>9</integer>
+                    <integer>8</integer>
+                    <integer>7</integer>
+                    <integer>40789</integer>
+                    <integer>66</integer>
+                </array>
+            </dict>
+            <dict>
+                <key>name</key>
+                <string>${space7_uuid}</string>
+                <key>windows</key>
+                <array>
+                    <integer>39694</integer>
+                    <integer>10</integer>
+                    <integer>9</integer>
+                    <integer>8</integer>
+                    <integer>7</integer>
+                    <integer>40789</integer>
+                    <integer>66</integer>
+                </array>
+            </dict>
+        </array>
+    </dict>
+    <key>app-bindings</key>
+    <dict>
+        <key>com.apple.ical</key>
+        <string>${space7_uuid}</string>
+        <key>com.apple.mail</key>
+        <string>${space5_uuid}</string>
+        <key>com.apple.mobilesms</key>
+        <string>${space2_uuid}</string>
+        <key>com.apple.notes</key>
+        <string></string>
+        <key>com.apple.safari</key>
+        <string>${space1_uuid}</string>
+        <key>com.hnc.discord</key>
+        <string>${space2_uuid}</string>
+        <key>com.microsoft.outlook</key>
+        <string>${space5_uuid}</string>
+        <key>com.readdle.smartemail-mac</key>
+        <string>${space5_uuid}</string>
+        <key>org.whispersystems.signal-desktop</key>
+        <string>${space2_uuid}</string>
+    </dict>
+</dict>
+</plist>
+EOF
+
+    # Import the plist file
+    defaults import com.apple.spaces /tmp/spaces.plist
+    
+    # Clean up
+    rm /tmp/spaces.plist
+    
+    print_success "Spaces configuration created"
+    
+    # Restart Dock to apply changes
+    killall Dock
+}
+
+# Call the function after Dock configuration
+create_spaces
+
 ###############################################################################
 # Final Steps & Manual To-Do List                                             #
 ###############################################################################
@@ -451,6 +803,7 @@ echo "  ${ARROW} Configure Time Machine backup"
 echo "  ${ARROW} Set up Touch ID"
 echo "  ${ARROW} Configure Keyboard shortcuts"
 echo "  ${ARROW} Set up Hot Corners"
+echo "  ${ARROW} Set up 7 Spaces/Desktops (Control + Up Arrow to add new spaces)"
 
 print_step "Applications:"
 echo "  ${ARROW} Sign in to 1Password"
