@@ -199,7 +199,7 @@ print_success "LazyVim installed"
 print_header "Creating Symlinks"
 print_step "Running stow..."
 cd ${dotfiledir}
-stow .
+/opt/homebrew/bin/stow .
 print_success "Symlinks created"
 
 # Install SbarLua & Sketchybar Font
