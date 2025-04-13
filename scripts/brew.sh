@@ -255,13 +255,48 @@ print_success "Window management tools installed"
 print_header "Installing Applications"
 
 print_step "Installing GUI applications..."
-brew install --cask 1password 1password-cli chatgpt cursor docker drawio discord firefox \
-    gimp gpg-suite iterm2 karabiner-elements \
-    little-snitch macfuse micro-snitch microsoft-office microsoft-teams parallels \
-    pdf-expert plex private-internet-access qlmarkdown qgis raycast rustdesk \
-    sf-symbols signal tailscale tor-browser veracrypt
-# Install fonts from main cask repository
-brew install --cask font-hack-nerd-font font-jetbrains-mono
+# Security & Privacy
+brew install --cask 1password        # Password manager
+brew install --cask 1password-cli    # 1Password CLI
+brew install --cask gpg-suite        # GPG tools
+brew install --cask little-snitch    # Network monitor
+brew install --cask micro-snitch     # Microphone monitor
+brew install --cask private-internet-access  # VPN
+brew install --cask tailscale        # VPN
+brew install --cask tor-browser      # Privacy browser
+brew install --cask veracrypt        # Disk encryption
+
+# Development
+brew install --cask cursor           # AI-powered IDE
+brew install --cask docker           # Container platform
+brew install --cask drawio           # Diagram editor
+brew install --cask iterm2           # Terminal emulator
+brew install --cask qgis             # GIS software
+brew install --cask rustdesk         # Remote desktop
+
+# Productivity
+brew install --cask chatgpt          # AI assistant
+brew install --cask discord          # Communication
+brew install --cask firefox          # Web browser
+brew install --cask microsoft-office # Office suite
+brew install --cask microsoft-teams  # Team collaboration
+brew install --cask parallels        # Virtualization
+brew install --cask pdf-expert       # PDF editor
+brew install --cask plex             # Media server
+brew install --cask raycast          # Launcher
+brew install --cask signal           # Messaging
+
+# Utilities
+brew install --cask gimp             # Image editor
+brew install --cask karabiner-elements  # Keyboard customizer
+brew install --cask macfuse          # File system extension
+brew install --cask qlmarkdown       # QuickLook for Markdown
+brew install --cask sf-symbols       # Apple SF Symbols
+
+# Fonts
+brew install --cask font-hack-nerd-font    # Hack Nerd Font
+brew install --cask font-jetbrains-mono    # JetBrains Mono
+
 print_success "GUI applications installed"
 
 ###############################################################################
