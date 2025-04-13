@@ -2,7 +2,7 @@
 
 > A powerful, automated macOS setup and configuration system
 
-![macOS](https://img.shields.io/badge/macOS-Sonoma-black?style=flat&logo=apple)
+![macOS](https://img.shields.io/badge/macOS-Sequoia-black?style=flat&logo=apple)
 ![Shell](https://img.shields.io/badge/Shell-zsh-blue?style=flat&logo=gnu-bash)
 ![Package Manager](https://img.shields.io/badge/Package%20Manager-Homebrew-yellow?style=flat&logo=homebrew)
 ![Editor](https://img.shields.io/badge/Editor-Neovim-green?style=flat&logo=neovim)
