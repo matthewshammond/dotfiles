@@ -406,30 +406,57 @@ if [[ "$install_pentest_tools" =~ ^[Yy] ]]; then
     print_header "Installing Pentesting Tools"
     
     print_step "Installing CLI pentesting tools..."
-    brew install aircrack-ng bettercap binwalk crunch exiftool exploitdb ffuf \
-        gobuster hashcat hydra ifstat john-jumbo netcat nikto nmap postgresql \
-        proxychains-ng rlwrap samba snort sqlmap telnet theharvester volatility \
-        wpscanteam/tap/wpscan
+    brew install aircrack-ng    # Wireless network security tool
+    brew install bettercap      # Network attack and monitoring tool
+    brew install binwalk        # Firmware analysis tool
+    brew install crunch         # Wordlist generator
+    brew install exiftool       # Metadata analysis tool
+    brew install exploitdb      # Exploit database
+    brew install ffuf           # Web fuzzer
+    brew install gobuster       # Directory/file brute-forcer
+    brew install hashcat        # Password cracker
+    brew install hydra          # Network login cracker
+    brew install ifstat         # Network interface statistics
+    brew install john-jumbo     # Password cracker (John the Ripper)
+    brew install netcat         # Network utility
+    brew install nikto          # Web server scanner
+    brew install nmap           # Network mapper
+    brew install postgresql     # Database for tools
+    brew install proxychains-ng # Proxy chains
+    brew install rlwrap         # Readline wrapper
+    brew install samba          # SMB/CIFS tools
+    brew install snort          # Network intrusion detection
+    brew install sqlmap         # SQL injection tool
+    brew install telnet         # Network protocol
+    brew install theharvester   # Email/domain recon tool
+    brew install volatility     # Memory forensics
+    brew install wpscanteam/tap/wpscan  # WordPress scanner
     print_success "CLI pentesting tools installed"
 
     print_step "Installing GUI pentesting tools..."
-    brew install --cask burp-suite ghidra metasploit owasp-zap wireshark xquartz
+    brew install --cask burp-suite    # Web security testing
+    brew install --cask ghidra        # Reverse engineering
+    brew install --cask metasploit    # Exploitation framework
+    brew install --cask owasp-zap     # Web app scanner
+    brew install --cask wireshark     # Network protocol analyzer
+    brew install --cask xquartz       # X11 server for GUI tools
     print_success "GUI pentesting tools installed"
 
     print_step "Installing additional pentesting tools..."
-    # enum4linux
+    # enum4linux - SMB enumeration tool
     git clone https://github.com/CiscoCXSecurity/enum4linux.git /opt/homebrew/Cellar/enum4linux && \
         sudo ln -s /opt/homebrew/Cellar/enum4linux/enum4linux.pl /usr/local/bin/enum4linux
     brew link enum4linux
     
-    # smbmap
+    # smbmap - SMB share enumeration tool
     git clone https://github.com/ShawnDEvans/smbmap.git /opt/homebrew/Cellar/smbmap && \
         python3 -m pip install -r /opt/homebrew/Cellar/smbmap/requirements.txt && \
         sudo ln -s /opt/homebrew/Cellar/smbmap/smbmap.py /usr/local/bin/smbmap
     brew link smbmap
 
-    # crackmapexec and pwncat
+    # crackmapexec - Windows/Active Directory exploitation tool
     pipx install crackmapexec
+    # pwncat - Post-exploitation framework
     pipx install git+https://github.com/calebstewart/pwncat.git
     
     print_success "Additional pentesting tools installed"
