@@ -146,13 +146,47 @@ print_step "Checking repository type..."
 
 # Check if private repository
 if [[ "$(git config --get remote.origin.url)" == *"git@github.com"* ]]; then
-  print_info "Private repository detected"
-  print_step "Initializing private repository..."
-  git submodule init
-  git submodule update
-  print_success "Private files initialized"
+    print_info "Private repository detected"
+    print_step "Initializing private repository..."
+    git submodule init
+    git submodule update
+    
+    # Check if there are actual files in the private directory
+    if [ -n "$(ls -A ${dotfiledir}/private)" ]; then
+        print_step "Processing private files..."
+        
+        # Handle .config directories from private repo
+        if [ -d "${dotfiledir}/private/.config" ]; then
+            print_step "Processing private .config directories..."
+            
+            # Copy specific .config directories (asciinema and gh)
+            for dir in "asciinema" "gh"; do
+                if [ -d "${dotfiledir}/private/.config/$dir" ]; then
+                    print_step "Copying private $dir configuration..."
+                    cp -R "${dotfiledir}/private/.config/$dir" "${dotfiledir}/.config/"
+                    print_success "$dir configuration copied"
+                fi
+            done
+        fi
+        
+        # Then handle all other private files
+        print_step "Processing other private files..."
+        for file in "${dotfiledir}/private"/*; do
+            if [ -f "$file" ]; then  # Only process files, not directories
+                filename=$(basename "$file")
+                if [[ "$filename" != ".DS_Store" && "$filename" != "README.md" && "$filename" != ".config" ]]; then
+                    cp "$file" "${dotfiledir}/"
+                    print_success "Copied private file: $filename"
+                fi
+            fi
+        done
+        
+        print_success "Private files initialized"
+    else
+        print_info "No files found in private directory"
+    fi
 else
-  print_info "Public repository detected, skipping private files"
+    print_info "Public repository detected, skipping private files"
 fi
 
 # Run Homebrew script
