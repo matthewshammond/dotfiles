@@ -99,15 +99,56 @@ print_success "Additional repositories tapped"
 print_header "Installing Core Development Tools"
 
 # Programming Languages
-if [[ "$install_python" =~ ^[Yy] ]]; then
+if [ "$1" = "y" ]; then
     print_step "Installing Python environment..."
-    brew install pyenv
-    brew install pyenv-virtualenv
-    pyenv install 3.12.2
+    
+    # Install pyenv and pyenv-virtualenv
+    brew install pyenv pyenv-virtualenv
+    
+    # Add pyenv to shell
+    echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.zshrc
+    echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.zshrc
+    echo 'eval "$(pyenv init -)"' >> ~/.zshrc
+    echo 'eval "$(pyenv virtualenv-init -)"' >> ~/.zshrc
+    
+    # Source the updated shell configuration
+    source ~/.zshrc
+    
+    # Install Python versions if they don't exist
+    if ! pyenv versions | grep -q "3.12.2"; then
+        print_step "Installing Python 3.12.2..."
+        pyenv install 3.12.2
+    else
+        print_success "Python 3.12.2 is already installed"
+    fi
+    
+    if ! pyenv versions | grep -q "3.11.8"; then
+        print_step "Installing Python 3.11.8..."
+        pyenv install 3.11.8
+    else
+        print_success "Python 3.11.8 is already installed"
+    fi
+    
+    # Set global Python version
     pyenv global 3.12.2
-    pip3 install ntfy
-    pyenv rehash
-    print_success "Python 3.12.2 installed and configured"
+    
+    # Create and activate virtual environments
+    print_step "Setting up virtual environments..."
+    if [ ! -d "$HOME/.pyenv/versions/neovim" ]; then
+        pyenv virtualenv 3.12.2 neovim
+    fi
+    if [ ! -d "$HOME/.pyenv/versions/global" ]; then
+        pyenv virtualenv 3.12.2 global
+    fi
+    
+    # Install pip packages in global environment
+    print_step "Installing global pip packages..."
+    pyenv activate global
+    pip install --upgrade pip
+    pip install -r "$dotfiledir/requirements.txt"
+    pyenv deactivate
+    
+    print_success "Python environment configured"
 else
     print_info "Skipping Python installation"
     sed -i '' '17s/^/#/' ${dotfiledir}/.zshrc
@@ -121,10 +162,18 @@ fi
 if [[ "$install_go" =~ ^[Yy] ]]; then
     print_step "Installing Go environment..."
     brew install goenv --HEAD
-    goenv install 1.22.1
+    
+    # Install Go version if it doesn't exist
+    if ! goenv versions | grep -q "1.22.1"; then
+        print_step "Installing Go 1.22.1..."
+        goenv install 1.22.1
+    else
+        print_success "Go 1.22.1 is already installed"
+    fi
+    
     goenv global 1.22.1
     goenv rehash
-    print_success "Go 1.22.1 installed and configured"
+    print_success "Go environment configured"
 else
     print_info "Skipping Go installation"
     sed -i '' '20s/^/#/' ${dotfiledir}/.zshrc
@@ -136,12 +185,34 @@ if [[ "$install_ruby" =~ ^[Yy] ]]; then
     print_step "Installing Ruby environment..."
     brew install rbenv
     brew install ruby-build
-    rbenv install 3.3.0
+    
+    # Install Ruby version if it doesn't exist
+    if ! rbenv versions | grep -q "3.3.0"; then
+        print_step "Installing Ruby 3.3.0..."
+        rbenv install 3.3.0
+    else
+        print_success "Ruby 3.3.0 is already installed"
+    fi
+    
     rbenv global 3.3.0
-    gem install rails -v 7.1.3.2
-    gem install bundler
+    
+    # Install gems if not already installed
+    if ! gem list | grep -q "rails"; then
+        print_step "Installing Rails..."
+        gem install rails -v 7.1.3.2
+    else
+        print_success "Rails is already installed"
+    fi
+    
+    if ! gem list | grep -q "bundler"; then
+        print_step "Installing Bundler..."
+        gem install bundler
+    else
+        print_success "Bundler is already installed"
+    fi
+    
     rbenv rehash
-    print_success "Ruby 3.3.0 installed and configured"
+    print_success "Ruby environment configured"
 else
     print_info "Skipping Ruby installation"
     sed -i '' '19s/^/#/' ${dotfiledir}/.zshrc
@@ -151,9 +222,19 @@ fi
 
 if [[ "$install_rust" =~ ^[Yy] ]]; then
     print_step "Installing Rust environment..."
-    brew install rustup-init
-    rustup-init -y
-    print_success "Rust installed and configured"
+    
+    # Check if rustup is already installed
+    if ! command -v rustup &> /dev/null; then
+        brew install rustup-init
+        rustup-init -y
+    else
+        print_success "Rust is already installed"
+    fi
+    
+    # Ensure the default toolchain is installed
+    rustup default stable
+    
+    print_success "Rust environment configured"
 else
     print_info "Skipping Rust installation"
     sed -i '' '39s/^/#/' ${dotfiledir}/.zshrc
