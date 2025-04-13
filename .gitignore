@@ -1,3 +1,5 @@
+\.config/asciinema/
+\.config/gh/
 \.gitconfig
 \.gnupg/
 \.ntfy.yml
