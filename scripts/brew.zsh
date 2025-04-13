@@ -1,4 +1,9 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
+
+###############################################################################
+# Homebrew Installation Script                                                #
+# This script installs Homebrew and all necessary packages                    #
+###############################################################################
 
 # Terminal colors and icons (matching install.sh)
 RED='\033[0;31m'
