@@ -147,10 +147,12 @@ bash ${dotfiledir}/scripts/brew.sh "$install_python" "$install_ruby" "$install_g
 # Setup shell history
 print_header "Configuring Shell"
 print_step "Setting up shell history..."
-setopt HIST_VERIFY
-setopt SHARE_HISTORY
-setopt APPEND_HISTORY
-setopt HISTIGNOREALLDUPS
+# Configure shell history settings
+export HISTSIZE=10000
+export SAVEHIST=10000
+export HISTFILE=~/.zsh_history
+export HISTCONTROL=ignoredups
+export HISTIGNORE="ls:cd:cd -:pwd:exit:date:* --help"
 print_success "Shell history configured"
 
 # Setup GPG
