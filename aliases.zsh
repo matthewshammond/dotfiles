@@ -142,6 +142,20 @@ alias lg='lazygit' # Opens lazygit in current directory
 # Git Private Commit
 # usage: gpc <name> <message>
 gpc () {
+    if [ -z "$1" ] && [ -z "$2" ]
+    then
+        # If no arguments, check for changes in private files
+        echo "Checking for changes in private files..."
+        for file in .gitconfig .gnupg/* .ntfy.yml .ssh/* hosts*; do
+            if [ -f "$file" ] && [ -f "private/$file" ]; then
+                if ! cmp -s "$file" "private/$file"; then
+                    echo "Modified: $file"
+                fi
+            fi
+        done
+        return 0
+    fi
+
     if [ -z "$1" ] || [ -z "$2" ]
     then
         echo 'gpc <file> <message>'
@@ -154,7 +168,10 @@ gpc () {
         return 1
     fi
     
-    # First commit in the private repository (submodule)
+    # First copy the changed file to the private directory
+    cp -f "$1" "private/$1"
+    
+    # Then commit in the private repository (submodule)
     cd "$(git rev-parse --show-toplevel)"
     git -C private add -f "$1"
     git -C private commit -m "$2"
