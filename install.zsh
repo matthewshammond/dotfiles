@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 
 ################################################################################
 #                        🚀 macOS System Setup Script                           #
@@ -54,7 +54,7 @@ print_info() {
 
 # Check arguments
 if [ "$#" -ne 1 ]; then
-  print_error "Usage: install.sh <home_directory>"
+  print_error "Usage: install.zsh <home_directory>"
   exit 1
 fi
 
@@ -114,15 +114,15 @@ fi
 
 # Get computer name
 print_step "Setting up computer identity..."
-read -p "$(printf "${CYAN}${GEAR} Enter computer name: ${NC}")" name
+read "name?$(printf "${CYAN}${GEAR} Enter computer name: ${NC}")"
 
 # Installation options
 print_header "Installation Options"
-read -p "$(printf "${CYAN}${GEAR} Install Python? (y/n): ${NC}")" install_python
-read -p "$(printf "${CYAN}${GEAR} Install Ruby? (y/n): ${NC}")" install_ruby
-read -p "$(printf "${CYAN}${GEAR} Install Go? (y/n): ${NC}")" install_go
-read -p "$(printf "${CYAN}${GEAR} Install Rust? (y/n): ${NC}")" install_rust
-read -p "$(printf "${CYAN}${GEAR} Install pentesting tools? (y/n): ${NC}")" install_pentest_tools
+read "install_python?$(printf "${CYAN}${GEAR} Install Python? (y/n): ${NC}")"
+read "install_ruby?$(printf "${CYAN}${GEAR} Install Ruby? (y/n): ${NC}")"
+read "install_go?$(printf "${CYAN}${GEAR} Install Go? (y/n): ${NC}")"
+read "install_rust?$(printf "${CYAN}${GEAR} Install Rust? (y/n): ${NC}")"
+read "install_pentest_tools?$(printf "${CYAN}${GEAR} Install pentesting tools? (y/n): ${NC}")"
 
 # Setup dotfiles
 print_header "Setting up dotfiles"
@@ -142,17 +142,15 @@ fi
 # Run Homebrew script
 print_header "Installing Software"
 print_step "Running Homebrew installation..."
-bash ${dotfiledir}/scripts/brew.sh "$install_python" "$install_ruby" "$install_go" "$install_rust" "$install_transmission" "$install_pentest_tools"
+zsh ${dotfiledir}/scripts/brew.sh "$install_python" "$install_ruby" "$install_go" "$install_rust" "$install_transmission" "$install_pentest_tools"
 
 # Setup shell history
 print_header "Configuring Shell"
 print_step "Setting up shell history..."
-# Configure shell history settings
-export HISTSIZE=10000
-export SAVEHIST=10000
-export HISTFILE=~/.zsh_history
-export HISTCONTROL=ignoredups
-export HISTIGNORE="ls:cd:cd -:pwd:exit:date:* --help"
+setopt HIST_VERIFY
+setopt SHARE_HISTORY
+setopt APPEND_HISTORY
+setopt HISTIGNOREALLDUPS
 print_success "Shell history configured"
 
 # Setup GPG
@@ -199,14 +197,25 @@ print_success "Sketchybar setup complete"
 # Configure powerlevel10k
 print_header "Setting up Shell Theme"
 print_step "Configuring Powerlevel10k..."
-print_info "Powerlevel10k will be configured in your next shell session"
-print_info "After installation, run 'p10k configure' to set up your prompt"
-print_success "Powerlevel10k configuration prepared"
+# Create powerlevel10k configuration directory if it doesn't exist
+mkdir -p "${homedir}/.cache"
+# Create a basic .p10k.zsh file if it doesn't exist
+if [ ! -f "${homedir}/.p10k.zsh" ]; then
+    cat > "${homedir}/.p10k.zsh" << 'EOL'
+# Enable Powerlevel10k instant prompt
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+EOL
+fi
+print_success "Powerlevel10k configured"
 
 # Source zshrc
 print_step "Sourcing zshrc..."
-# Skip sourcing zshrc in the script since it contains zsh-specific syntax
-print_info "Zsh configuration will be loaded in your next shell session"
+source ${homedir}/.zshrc
 print_success "Shell configuration loaded"
 
 # Configure Touch ID for sudo
@@ -378,4 +387,4 @@ print_warning "Please complete these steps to finish setting up your system"
 
 print_header "Installation Complete! 🎉"
 print_success "Your development environment has been set up successfully"
-print_info "Please review the manual steps above to complete the configuration"
+print_info "Please review the manual steps above to complete the configuration" 
