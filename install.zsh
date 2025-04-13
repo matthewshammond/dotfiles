@@ -408,10 +408,15 @@ Safari=$(dock_item "file:///System/Cryptexes/App/System/Applications/Safari.app/
 Notes=$(dock_item "file:///System/Applications/Notes.app/")
 iTerm=$(dock_item "file:///Applications/iTerm.app/")
 
-# Add folders to Dock
-Applications=$(dock_item "file:///Applications/")
-Documents=$(dock_item "file:///Users/matthammond/Documents/")
-Downloads=$(dock_item "file:///Users/matthammond/Downloads/")
+# Add folders to Dock with proper attributes
+print_step "Adding folders to Dock..."
+dock_folder() {
+    printf '<dict><key>tile-data</key><dict><key>arrangement</key><integer>1</integer><key>displayas</key><integer>1</integer><key>file-data</key><dict><key>_CFURLString</key><string>%s</string><key>_CFURLStringType</key><integer>15</integer></dict><key>file-label</key><string>%s</string><key>file-type</key><integer>2</integer><key>is-beta</key><integer>0</integer><key>preferreditemsize</key><string>-1</string><key>showas</key><integer>3</integer></dict><key>tile-type</key><string>directory-tile</string></dict>', "$1" "$2"
+}
+
+Applications=$(dock_folder "file:///Applications/" "Applications")
+Documents=$(dock_folder "file:///Users/matthammond/Documents/" "Documents")
+Downloads=$(dock_folder "file:///Users/matthammond/Downloads/" "Downloads")
 
 # Set Dock items
 defaults write com.apple.dock persistent-apps -array "$Mail" "$Outlook" "$Spark" "$Calendars" "$Calendar" "$Messages" "$Discord" "$Signal" "$Safari" "$Notes" "$iTerm"
