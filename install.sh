@@ -199,7 +199,10 @@ print_success "Sketchybar setup complete"
 # Configure powerlevel10k
 print_header "Setting up Shell Theme"
 print_step "Configuring Powerlevel10k..."
-p10k configure
+# Source powerlevel10k configuration
+source "${homedir}/.zshrc"
+# Run powerlevel10k configuration
+source "${homedir}/.p10k.zsh" 2>/dev/null || true
 print_success "Powerlevel10k configured"
 
 # Source zshrc
