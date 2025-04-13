@@ -159,10 +159,20 @@ gpc () {
     then
         # If no arguments, check for changes in private files
         echo "Checking for changes in private files..."
+        # Check root level private files
         for file in .gitconfig .gnupg/* .ntfy.yml .ssh/* hosts*; do
             if [ -f "$file" ] && [ -f "private/$file" ]; then
                 if ! cmp -s "$file" "private/$file"; then
                     echo "Modified: $file"
+                fi
+            fi
+        done
+        # Check .config directories
+        for dir in "asciinema" "gh"; do
+            if [ -d ".config/$dir" ] && [ -d "private/.config/$dir" ]; then
+                # Using diff to check directory differences
+                if ! diff -r ".config/$dir" "private/.config/$dir" >/dev/null 2>&1; then
+                    echo "Modified: .config/$dir"
                 fi
             fi
         done
@@ -181,7 +191,31 @@ gpc () {
         return 1
     fi
     
-    # First copy the changed file to the private directory
+    # Handle .config directories specially
+    if [[ "$1" == .config/* ]]; then
+        # Extract the directory name after .config/
+        config_dir=$(echo "$1" | cut -d'/' -f2)
+        if [[ "$config_dir" == "asciinema" || "$config_dir" == "gh" ]]; then
+            # Create .config directory in private if it doesn't exist
+            mkdir -p "private/.config"
+            # Copy the entire directory
+            cp -R ".config/$config_dir" "private/.config/"
+            
+            # Then commit in the private repository (submodule)
+            cd "$(git rev-parse --show-toplevel)"
+            git -C private add -f ".config/$config_dir"
+            git -C private commit -m "$2"
+            git -C private push
+            
+            # Then update the submodule reference in the main repository
+            git add private
+            git commit -m "Update private submodule: $2"
+            git push
+            return 0
+        fi
+    fi
+    
+    # Handle regular private files (existing logic)
     cp -f "$1" "private/$1"
     
     # Then commit in the private repository (submodule)
