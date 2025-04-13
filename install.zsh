@@ -277,14 +277,9 @@ print_success "Sketchybar setup complete"
 # Setup shell theme
 print_header "Setting up Shell Theme"
 print_step "Configuring Powerlevel10k..."
-# Source pyenv initialization first
-export PYENV_ROOT="$HOME/.pyenv"
-[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
-
-# Source zshrc with proper paths
-source ~/.zshrc
 print_success "Powerlevel10k configured"
+
+print_info "Note: You'll need to open a new terminal for all shell configurations to take effect"
 
 # Configure Touch ID for sudo
 print_header "Configuring Security"
