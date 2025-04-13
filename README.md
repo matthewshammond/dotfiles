@@ -33,7 +33,7 @@ This repository contains my personal dotfiles and system configuration, designed
 2. Run the installation script:
    ```bash
    cd ~/.dotfiles
-   ./install.sh "$HOME"
+   ./install.zsh "$HOME"
    ```
 
 3. Follow the interactive prompts to customize your installation.
