@@ -192,7 +192,7 @@ fi
 # Run Homebrew script
 print_header "Installing Software"
 print_step "Installing Homebrew and packages..."
-zsh ${dotfiledir}/scripts/brew.zsh $install_python $install_ruby $install_go $install_rust $install_transmission $install_pentest_tools
+zsh ${dotfiledir}/scripts/brew.zsh $install_python $install_ruby $install_go $install_rust $install_pentest_tools
 
 # Setup shell history
 print_header "Configuring Shell"

@@ -56,8 +56,7 @@ install_python=$1
 install_ruby=$2
 install_go=$3
 install_rust=$4
-install_transmission=$5
-install_pentest_tools=$6
+install_pentest_tools=$5
 
 print_header "Starting Homebrew Installation and Setup ${BEER}"
 
@@ -104,7 +103,7 @@ print_success "Additional repositories tapped"
 print_header "Installing Core Development Tools"
 
 # Programming Languages
-if [ "$1" = "y" ]; then
+if [ "$install_python" = "y" ]; then
     print_step "Installing Python environment..."
     
     # Install pyenv and pyenv-virtualenv
@@ -157,7 +156,7 @@ else
     sed -i '' '28s/^/#/' ${dotfiledir}/.zshrc
 fi
 
-if [[ "$install_go" =~ ^[Yy] ]]; then
+if [ "$install_go" = "y" ]; then
     print_step "Installing Go environment..."
     brew install goenv --HEAD
     
@@ -179,7 +178,7 @@ else
     sed -i '' '36s/^/#/' ${dotfiledir}/.zshrc
 fi
 
-if [[ "$install_ruby" =~ ^[Yy] ]]; then
+if [ "$install_ruby" = "y" ]; then
     print_step "Installing Ruby environment..."
     brew install rbenv
     brew install ruby-build
@@ -218,7 +217,7 @@ else
     sed -i '' '32s/^/#/' ${dotfiledir}/.zshrc
 fi
 
-if [[ "$install_rust" =~ ^[Yy] ]]; then
+if [ "$install_rust" = "y" ]; then
     print_step "Installing Rust environment..."
     
     # Check if rustup is already installed
@@ -400,7 +399,7 @@ print_success "Mac App Store applications installed"
 # Pentesting Tools (Optional)                                                 #
 ###############################################################################
 
-if [[ "$install_pentest_tools" =~ ^[Yy] ]]; then
+if [ "$install_pentest_tools" = "y" ]; then
     print_header "Installing Pentesting Tools"
     
     print_step "Installing CLI pentesting tools..."
