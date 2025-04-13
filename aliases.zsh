@@ -147,15 +147,21 @@ gpc () {
         echo 'gpc <file> <message>'
         return 1
     fi
+
+    # Check if we're in a private clone
+    if [ ! -d "private" ]; then
+        echo "Error: This is not a private clone. Use regular git commands instead."
+        return 1
+    fi
     
     # First commit in the private repository (submodule)
     cd "$(git rev-parse --show-toplevel)"
-    git add -f "$1"
-    git commit -m "$2"
-    git push
+    git -C private add -f "$1"
+    git -C private commit -m "$2"
+    git -C private push
     
     # Then update the submodule reference in the main repository
-    git add "$1"
+    git add private
     git commit -m "Update private submodule: $2"
     git push
 }
