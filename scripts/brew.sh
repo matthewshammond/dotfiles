@@ -88,7 +88,6 @@ print_success "Homebrew updated to latest version"
 print_header "Adding Homebrew Taps"
 
 print_step "Tapping additional repositories..."
-brew tap homebrew/cask-fonts
 brew tap FelixKratz/formulae
 brew tap koekeishiya/formulae
 print_success "Additional repositories tapped"
@@ -193,10 +192,12 @@ print_header "Installing Applications"
 
 print_step "Installing GUI applications..."
 brew install --cask 1password 1password-cli chatgpt cursor docker drawio discord firefox \
-    font-hack-nerd-font font-jetbrains-mono gimp gpg-suite iterm2 karabiner-elements \
+    gimp gpg-suite iterm2 karabiner-elements \
     little-snitch macfuse micro-snitch microsoft-office microsoft-teams parallels \
     pdf-expert plex private-internet-access qlmarkdown qgis raycast rustdesk \
     sf-symbols signal tailscale tor-browser veracrypt
+# Install fonts from main cask repository
+brew install --cask font-hack-nerd-font font-jetbrains-mono
 print_success "GUI applications installed"
 
 ###############################################################################
