@@ -122,13 +122,6 @@ if [ "$1" = "y" ]; then
         print_success "Python 3.12.2 is already installed"
     fi
     
-    if ! pyenv versions | grep -q "3.11.8"; then
-        print_step "Installing Python 3.11.8..."
-        pyenv install 3.11.8
-    else
-        print_success "Python 3.11.8 is already installed"
-    fi
-    
     # Set global Python version
     pyenv global 3.12.2
     
