@@ -167,10 +167,57 @@ fi
 print_header "Installing CLI Tools"
 
 print_step "Installing essential command line tools..."
-brew install agg bat btop cmake coreutils duf eza fd fzf gh git gnu-sed \
-    gnupg hopenpgp-tools hugo imagemagick jq lua mas ncdu neovim node openvpn \
-    pinentry-mac pipx powerlevel10k progress rename ripgrep rsync sketchybar \
-    skhd speedtest-cli stow tmux watch wget yabai ykman ykpers youtubedr
+# File operations
+brew install coreutils  # GNU core utilities
+brew install gnu-sed    # GNU sed
+brew install rename     # Batch rename files
+brew install rsync      # File synchronization
+brew install stow       # Symlink manager
+
+# System monitoring
+brew install btop       # Resource monitor
+brew install duf        # Disk usage
+brew install ncdu       # Disk usage analyzer
+brew install progress   # Progress bar for coreutils
+
+# Search and navigation
+brew install fd         # Find alternative
+brew install fzf        # Fuzzy finder
+brew install ripgrep    # Grep alternative
+brew install autojump   # Directory navigation
+
+# Text processing
+brew install agg        # ASCII art generator
+brew install bat        # Cat with syntax highlighting
+brew install eza        # ls alternative
+brew install jq         # JSON processor
+
+# Network tools
+brew install openvpn    # VPN client
+brew install speedtest-cli  # Internet speed test
+brew install wget       # Web downloader
+brew install youtubedr  # YouTube downloader
+
+# Development tools
+brew install cmake      # Build system
+brew install gh         # GitHub CLI
+brew install git        # Version control
+brew install hugo       # Static site generator
+brew install lua        # Programming language
+brew install neovim     # Text editor
+brew install node       # JavaScript runtime
+brew install tmux       # Terminal multiplexer
+brew install watch      # Execute program periodically
+
+# Security tools
+brew install gnupg      # GNU Privacy Guard
+brew install hopenpgp-tools  # OpenPGP tools
+brew install pinentry-mac  # PIN entry
+brew install ykman      # YubiKey manager
+brew install ykpers     # YubiKey personalization
+
+# macOS specific
+brew install mas        # Mac App Store CLI
 
 print_success "CLI tools installed successfully"
 
@@ -181,8 +228,25 @@ print_success "CLI tools installed successfully"
 print_header "Installing Shell Enhancements"
 
 print_step "Installing Zsh and plugins..."
-brew install zsh zsh-autosuggestions zsh-completions zsh-syntax-highlighting zsh-vi-mode
+brew install zsh                    # Shell
+brew install zsh-autosuggestions    # Auto-suggestions
+brew install zsh-completions        # Completions
+brew install zsh-syntax-highlighting  # Syntax highlighting
+brew install zsh-vi-mode           # Vi mode
+brew install powerlevel10k         # Theme
 print_success "Zsh and plugins installed"
+
+###############################################################################
+# Window Management                                                           #
+###############################################################################
+
+print_header "Installing Window Management Tools"
+
+print_step "Installing window management tools..."
+brew install sketchybar  # Status bar
+brew install skhd       # Hotkey daemon
+brew install yabai      # Window manager
+print_success "Window management tools installed"
 
 ###############################################################################
 # Applications                                                                 #
