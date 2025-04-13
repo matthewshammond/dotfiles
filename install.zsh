@@ -352,13 +352,65 @@ print_header "Configuring Dock and Menu Bar"
 # Dock settings
 print_step "Configuring Dock..."
 defaults write com.apple.dock autohide -bool true
-defaults write com.apple.dock autohide-delay -float 0
-defaults write com.apple.dock autohide-time-modifier -float 0
+defaults write com.apple.dock "autohide-delay" -float 0
+defaults write com.apple.dock "autohide-time-modifier" -float 0.5
+defaults write com.apple.dock "enable-spring-load-actions-on-all-items" -bool true
+defaults write com.apple.dock "expose-animation-duration" -float 0.1
+defaults write com.apple.dock "expose-group-apps" -bool false
+defaults write com.apple.dock largesize -int 128
+defaults write com.apple.dock launchanim -bool false
+defaults write com.apple.dock loc -string "en_US:US"
+defaults write com.apple.dock mineffect -string "scale"
+defaults write com.apple.dock "minimize-to-application" -bool true
+defaults write com.apple.dock "mouse-over-hilite-stack" -bool true
+defaults write com.apple.dock "mru-spaces" -bool false
+defaults write com.apple.dock "no-bouncing" -bool false
 defaults write com.apple.dock orientation -string "left"
-defaults write com.apple.dock tilesize -int 36
-defaults write com.apple.dock show-recents -bool false
-defaults write com.apple.dock mru-spaces -bool false
-print_success "Dock configured: Auto-hide enabled, positioned left"
+defaults write com.apple.dock "show-process-indicators" -bool true
+defaults write com.apple.dock "show-recents" -bool false
+defaults write com.apple.dock showLaunchpadGestureEnabled -bool false
+defaults write com.apple.dock showhidden -bool true
+defaults write com.apple.dock tilesize -int 32
+
+# Disable click wallpaper to show desktop
+defaults write com.apple.WindowManager EnableStandardClickToShowDesktop -bool false
+
+# Hot corners
+defaults write com.apple.dock "wvous-bl-corner" -int 13
+defaults write com.apple.dock "wvous-bl-modifier" -int 524288
+defaults write com.apple.dock "wvous-br-corner" -int 14
+defaults write com.apple.dock "wvous-br-modifier" -int 0
+defaults write com.apple.dock "wvous-tl-corner" -int 1
+defaults write com.apple.dock "wvous-tl-modifier" -int 0
+defaults write com.apple.dock "wvous-tr-corner" -int 0
+defaults write com.apple.dock "wvous-tr-modifier" -int 0
+
+# Clear existing Dock items
+print_step "Clearing existing Dock items..."
+defaults delete com.apple.dock persistent-apps
+defaults delete com.apple.dock persistent-others
+
+# Add applications to Dock
+print_step "Adding applications to Dock..."
+dockutil --add "/System/Applications/Mail.app" --no-restart
+dockutil --add "/Applications/Microsoft Outlook.app" --no-restart
+dockutil --add "/Applications/Spark.app" --no-restart
+dockutil --add "/Applications/Calendars.app" --no-restart
+dockutil --add "/System/Applications/Calendar.app" --no-restart
+dockutil --add "/System/Applications/Messages.app" --no-restart
+dockutil --add "/Applications/Discord.app" --no-restart
+dockutil --add "/Applications/Signal.app" --no-restart
+dockutil --add "/System/Cryptexes/App/System/Applications/Safari.app" --no-restart
+dockutil --add "/System/Applications/Notes.app" --no-restart
+dockutil --add "/Applications/iTerm.app" --no-restart
+
+# Add folders to Dock
+print_step "Adding folders to Dock..."
+dockutil --add "/Applications" --view grid --display folder --no-restart
+dockutil --add "~/Documents" --view grid --display folder --no-restart
+dockutil --add "~/Downloads" --view grid --display folder --no-restart
+
+print_success "Dock configured"
 
 # Menu Bar settings
 print_step "Configuring Menu Bar..."
