@@ -157,8 +157,8 @@ fi
 
 # Run Homebrew script
 print_header "Installing Software"
-print_step "Running Homebrew installation..."
-zsh ${dotfiledir}/scripts/brew.sh "$install_python" "$install_ruby" "$install_go" "$install_rust" "$install_transmission" "$install_pentest_tools"
+print_step "Installing Homebrew and packages..."
+zsh ${dotfiledir}/scripts/brew.zsh $install_python $install_ruby $install_go $install_rust $install_transmission $install_pentest_tools
 
 # Setup shell history
 print_header "Configuring Shell"
@@ -198,8 +198,7 @@ print_success "LazyVim installed"
 # Create symlinks
 print_header "Creating Symlinks"
 print_step "Running stow..."
-cd ${dotfiledir}
-/opt/homebrew/bin/stow .
+/opt/homebrew/bin/stow --adopt -v -t ~ .
 print_success "Symlinks created"
 
 # Install SbarLua & Sketchybar Font
@@ -207,7 +206,7 @@ print_header "Setting up Sketchybar"
 print_step "Installing custom font and SbarLua..."
 curl -L https://github.com/kvndrsslr/sketchybar-app-font/releases/download/v2.0.5/sketchybar-app-font.ttf -o $HOME/Library/Fonts/sketchybar-app-font.ttf
 (git clone https://github.com/FelixKratz/SbarLua.git /tmp/SbarLua && cd /tmp/SbarLua/ && make install && rm -rf /tmp/SbarLua/)
-brew services restart sketchybar
+/opt/homebrew/bin/brew services restart sketchybar
 print_success "Sketchybar setup complete"
 
 # Configure powerlevel10k
