@@ -138,7 +138,7 @@ if [ "$1" = "y" ]; then
     print_step "Installing global pip packages..."
     pyenv activate global
     pip install --upgrade pip
-    pip install -r "$dotfiledir/requirements.txt"
+    pip install ntfy
     pyenv deactivate
     
     print_success "Python environment configured"
