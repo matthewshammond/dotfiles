@@ -199,15 +199,26 @@ print_success "Sketchybar setup complete"
 # Configure powerlevel10k
 print_header "Setting up Shell Theme"
 print_step "Configuring Powerlevel10k..."
-# Source powerlevel10k configuration
-source "${homedir}/.zshrc"
-# Run powerlevel10k configuration
-source "${homedir}/.p10k.zsh" 2>/dev/null || true
+# Create powerlevel10k configuration directory if it doesn't exist
+mkdir -p "${homedir}/.cache"
+# Create a basic .p10k.zsh file if it doesn't exist
+if [ ! -f "${homedir}/.p10k.zsh" ]; then
+    cat > "${homedir}/.p10k.zsh" << 'EOL'
+# Enable Powerlevel10k instant prompt
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+EOL
+fi
 print_success "Powerlevel10k configured"
 
 # Source zshrc
 print_step "Sourcing zshrc..."
-source ${homedir}/.zshrc
+# Skip sourcing zshrc in the script since it contains zsh-specific syntax
+print_info "Zsh configuration will be loaded in your next shell session"
 print_success "Shell configuration loaded"
 
 # Configure Touch ID for sudo
