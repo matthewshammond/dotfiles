@@ -231,8 +231,33 @@ print_success "LazyVim installed"
 
 # Create symlinks
 print_header "Creating Symlinks"
+print_step "Cleaning up existing files first..."
+# List of files/directories to clean up before stow
+files_to_clean=(
+    "$HOME/.config/asciinema"
+    "$HOME/.config/gh"
+    "$HOME/.config/karabiner"
+    "$HOME/.config/sketchybar"
+    "$HOME/.config/skhd"
+    "$HOME/.config/yabai"
+    "$HOME/.gitconfig"
+    "$HOME/.gnupg"
+    "$HOME/.ntfy.yml"
+    "$HOME/.p10k.zsh"
+    "$HOME/.ssh"
+    "$HOME/.tmux.conf"
+    "$HOME/.zshrc"
+)
+
+# Clean up existing files
+for file in "${files_to_clean[@]}"; do
+    if [ -e "$file" ]; then
+        print_info "Removing $file"
+        rm -rf "$file"
+    fi
+done
 print_step "Running stow..."
-/opt/homebrew/bin/stow --adopt -v -t ~ .
+/opt/homebrew/bin/stow .
 print_success "Symlinks created"
 
 # Install SbarLua & Sketchybar Font
