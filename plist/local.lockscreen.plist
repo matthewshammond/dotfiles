@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    
+    <key>Label</key>
+	<string>local.lockscreen</string>
+
+	<key>RunAtLoad</key>
+	<true/>
+
+    <key>StandardOutPath</key>
+	<string>/Users/matthammond/logs/lockscreenstdout.log</string>
+
+	<key>StandardErrorPath</key>
+	<string>/Users/matthammond/logs/lockscreenstderr.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>PATH</key>
+      <string><![CDATA[/Users/matthammond/.rbenv/shims:/Users/matthammond/.pyenv/shims:/Users/matthammond/.dotfiles/scripts:/Users/matthammond/.emacs.d/bin:/usr/local/opt/fzf/bin:/usr/local/sbin:/Users/matthammond/.rbenv/bin:/Users/matthammond/.pyenv/bin:/Users/matthammond/.rbenv/shims:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin]]></string>
+    </dict>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/matthammond/.dotfiles/scripts</string>
+
+	<key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>lockscreen.zsh</string>
+    </array>
+
+</dict>
+</plist>

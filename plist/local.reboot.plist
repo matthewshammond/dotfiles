@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+
+	<key>Label</key>
+	<string>local.reboot</string>
+
+	<key>RunAtLoad</key>
+	<true/>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>PATH</key>
+      <string><![CDATA[/Users/matthammond/.pyenv/shims:/Users/matthammond/.dotfiles/scripts:/opt/homebrew/opt/fzf/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/MacGPG2/bin:/Applications/Wireshark.app/Contents/MacOS]]></string>
+    </dict>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/matthammond/.dotfiles/scripts</string>
+
+	<key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>reboot.zsh</string>
+    </array>
+
+</dict>
+</plist>

@@ -1,0 +1,73 @@
+#!/usr/bin/env sh
+
+# run at load
+yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
+sudo yabai --load-sa
+
+#============================Global Settings==============================
+# menu bar settings
+yabai -m config menubar_opacity 0.0
+
+# window space settings
+yabai -m config layout bsp
+yabai -m config window_placement second_child
+yabai -m config top_padding 8
+yabai -m config bottom_padding 8
+yabai -m config left_padding 8
+yabai -m config right_padding 8
+yabai -m config window_gap 8
+yabai -m config auto_balance off
+yabai -m config split_ratio 0.50
+
+# window color settings
+# yabai -m config window_border off
+# yabai -m config window_border_width 3
+# yabai -m config window_border_radius 0
+# yabai -m config active_window_border_color 0xFF5E81AC
+# yabai -m config normal_window_border_color 0xFF2E3440
+# yabai -m signal --add event=window_created action="~/.config/yabai/borders.sh"
+# yabai -m signal --add event=window_destroyed action="~/.config/yabai/borders.sh"
+yabai -m config window_opacity on
+yabai -m config active_window_opacity 1.0
+yabai -m config normal_window_opacity 0.9
+
+# Sketchybar spacing
+yabai -m config external_bar all:32:0
+
+#============================Space Settings===============================
+# space names
+yabai -m space 1 --label "notes"
+yabai -m space 2 --label "web"
+yabai -m space 3 --label "chat"
+yabai -m space 4 --label "home"
+yabai -m space 5 --label "dev"
+yabai -m space 6 --label "email"
+yabai -m space 7 --label "calendar"
+
+# specific space settings
+yabai -m config --space 1 layout bsp
+yabai -m config --space 2 layout stack
+yabai -m config --space 3 layout float
+yabai -m config --space 4 layout float
+yabai -m config --space 5 layout bsp
+yabai -m config --space 6 layout stack
+yabai -m config --space 7 layout bsp
+
+#==============================Rules======================================
+# specific settings
+yabai -m rule --add app="^Notes$" space=^1
+yabai -m rule --add app="^(Safari|Tor Browser|Firefox)$" space=^2
+yabai -m rule --add app="^(Messages|Signal|Discord|Microsoft Teams)$" space=^3
+yabai -m rule --add app="^(Plex|Screen Sharing|Parallels Desktop|zoom.us|Docker Desktop)$" space=^4
+yabai -m rule --add app="^kitty$" space=^5
+yabai -m rule --add title="^(Main Terminal)$" space=^5
+yabai -m rule --add app="^(Spark|Mail|Microsoft Outlook)$" space=^6
+yabai -m rule --add app="^Calendar$" space=^7
+yabai -m rule --add app!="^(Notes|Safari|Firefox|Tor Browser|kitty|Spark|Mail|Microsoft Outlook|Calendar)$" manage=off sub-layer=below
+
+#==============================Borders====================================
+# uses JankyBorders
+# borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=3.0 &
+
+# run at finish
+echo "yabai configuration loaded.."

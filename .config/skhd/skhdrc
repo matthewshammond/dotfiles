@@ -1,0 +1,82 @@
+# ================================Window Settings================================
+# Set window focus
+# cmd + ctrl - h : yabai -m window --focus west
+# cmd + ctrl - j : yabai -m window --focus south
+# cmd + ctrl - k : yabai -m window --focus north
+# cmd + ctrl - l : yabai -m window --focus east 
+
+# Swap window position
+# alt + shift - h : yabai -m window --swap west
+# alt + shift - j : yabai -m window --swap south
+# alt + shift - k : yabai -m window --swap north
+# alt + shift - l : yabai -m window --swap east
+
+# Move window position
+# ctrl + shift - h : yabai -m window --warp west
+# ctrl + shift - j : yabai -m window --warp south
+# ctrl + shift - k : yabai -m window --warp north
+# ctrl + shift - l : yabai -m window --warp east
+
+# Adjust floating windows
+# cmd + shift - backspace : yabai -m window --grid 5:5:1:1:3:3
+# cmd + shift - return : yabai -m window --grid 1:1:0:0:1:1
+# cmd + shift - h : yabai -m window --grid 1:2:0:0:1:1
+# cmd + shift - j : yabai -m window --grid 2:1:0:1:1:1
+# cmd + shift - k : yabai -m window --grid 2:1:0:0:1:1
+# cmd + shift - l : yabai -m window --grid 1:2:1:0:1:1
+
+# Focus window up/down in stack
+cmd + shift - j : yabai -m window --focus "$(yabai -m query --windows --space | jq -re "[sort_by(.id, .frame) | .[] | select(.role == \"AXWindow\" and .subrole == \"AXStandardWindow\") | .id] | nth(index($(yabai -m query --windows --window | jq -re ".id")) - 1)")"
+cmd + shift - k : yabai -m window --focus "$(yabai -m query --windows --space | jq -re "[sort_by(.id, .frame) | reverse | .[] | select(.role == \"AXWindow\" and .subrole == \"AXStandardWindow\") | .id] | nth(index($(yabai -m query --windows --window | jq -re ".id")) - 1)")"
+
+# toggle menu bar opacity
+fn - n: yabai -m config menubar_opacity 0.0
+fn - m: yabai -m config menubar_opacity 1.0
+
+# toggle window split type
+alt - e : yabai -m window --toggle split
+
+# toggle tiled/floating space /
+cmd + shift - 0x2C : yabai -m space --layout $(yabai -m query --spaces --space | jq -r 'if .type == "bsp" then "float" elif .type == "float" then "stack" else "bsp" end')
+
+# float / unfloat window ,
+cmd + shift - 0x2B : yabai -m window --toggle float;\
+          yabai -m window --grid 4:4:1:1:2:2
+
+# =============================Move Window=======================================
+# hyper - 1: yabai -m window --space 1 --focus
+# hyper - 2: yabai -m window --space 2 --focus
+# hyper - 3: yabai -m window --space 3 --focus
+# hyper - 4: yabai -m window --space 4 --focus
+# hyper - 5: yabai -m window --space 5 --focus
+# hyper - 6: yabai -m window --space 6 --focus
+# hyper - 7: yabai -m window --space 7 --focus
+
+# =============================Application Shortcuts=============================
+# cmd + alt - o : open /Applications/1Password.app
+hyper - return : open /Applications/iTerm.app; osascript -e 'tell application "System Events" to key code 23 using command down' 
+# cmd + alt - a : open /System/Applications/Calendar.app
+# cmd + alt - c : open /System/Applications/Contacts.app
+# cmd + alt - d : open /Applications/Discord.app
+# cmd + alt - z : open /System/Applications/FaceTime.app
+# cmd + alt - f : open /System/Library/CoreServices/Finder.app
+# cmd + alt - g : open /Applications/GPG\ KeyChain.app
+# cmd + alt - i : open /System/Applications/iPhone\ Mirroring.app
+# cmd + alt - l : open /Applications/Little\ Snitch.app
+# cmd + alt - k : osascript -e 'tell app "Kali" to activate'
+# cmd + alt - m : open /System/Applications/Messages.app
+# cmd + alt - t : open /Applications/Microsoft\ Teams.app
+# cmd + alt - n : open /System/Applications/Notes.app
+# cmd + alt - r : open /System/Applications/Reminders.app
+# cmd + alt - b : open /Applications/Safari.app
+# cmd + alt - s : open /Applications/Signal.app
+# cmd + alt - e : open /System/Applications/Mail.app
+# cmd + alt - p : open /System/Applications/System\ Settings.app
+# cmd + alt - v : open /Applications/VeraCrypt.app
+# cmd + alt - w : open /Applications/Wireshark.app
+# cmd + alt - y : open /Applications/Yubico\ Authenticator.app
+
+# =================================Misc Shortcuts================================
+.blacklist [
+    "Parallels Desktop"
+]

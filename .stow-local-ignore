@@ -1,0 +1,14 @@
+\.config/sketchybar_original
+\.DS_Store
+\.git
+\.gitignore
+\.gnupg/pub.asc
+\.stow-local-ignore
+aliases.zsh
+Brewfile
+install.zsh
+iTerm2Profile.json
+plist
+Raycast.rayconfig
+README.*
+scripts
