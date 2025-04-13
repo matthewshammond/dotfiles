@@ -344,6 +344,34 @@ defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
 print_success "Search will default to current folder"
 
 ###############################################################################
+# Dock & Menu Bar                                                             #
+###############################################################################
+
+print_header "Configuring Dock and Menu Bar"
+
+# Dock settings
+print_step "Configuring Dock..."
+defaults write com.apple.dock autohide -bool true
+defaults write com.apple.dock autohide-delay -float 0
+defaults write com.apple.dock autohide-time-modifier -float 0
+defaults write com.apple.dock orientation -string "left"
+defaults write com.apple.dock tilesize -int 36
+defaults write com.apple.dock show-recents -bool false
+defaults write com.apple.dock mru-spaces -bool false
+print_success "Dock configured: Auto-hide enabled, positioned left"
+
+# Menu Bar settings
+print_step "Configuring Menu Bar..."
+defaults write NSGlobalDomain _HIHideMenuBar -bool true
+print_success "Menu Bar will auto-hide"
+
+# Restart Dock and Finder to apply changes
+print_step "Applying UI changes..."
+killall Dock
+killall Finder
+print_success "UI changes applied"
+
+###############################################################################
 # Final Steps & Manual To-Do List                                             #
 ###############################################################################
 
