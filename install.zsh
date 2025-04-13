@@ -229,6 +229,12 @@ rm -rf ~/.config/nvim/.git
 rm -rf ~/.config/nvim/lua
 print_success "LazyVim installed"
 
+# Use full paths for commands
+BREW_PATH="/opt/homebrew/bin/brew"
+OP_PATH="/opt/homebrew/bin/op"
+GPG_PATH="/opt/homebrew/bin/gpgconf"
+STOW_PATH="/opt/homebrew/bin/stow"
+
 # Create symlinks
 print_header "Creating Symlinks"
 print_step "Cleaning up existing files first..."
@@ -257,7 +263,7 @@ for file in "${files_to_clean[@]}"; do
     fi
 done
 print_step "Running stow..."
-/opt/homebrew/bin/stow .
+$STOW_PATH .
 print_success "Symlinks created"
 
 # Install SbarLua & Sketchybar Font
@@ -268,29 +274,17 @@ curl -L https://github.com/kvndrsslr/sketchybar-app-font/releases/download/v2.0.
 /opt/homebrew/bin/brew services restart sketchybar
 print_success "Sketchybar setup complete"
 
-# Configure powerlevel10k
+# Setup shell theme
 print_header "Setting up Shell Theme"
 print_step "Configuring Powerlevel10k..."
-# Create powerlevel10k configuration directory if it doesn't exist
-mkdir -p "${homedir}/.cache"
-# Create a basic .p10k.zsh file if it doesn't exist
-if [ ! -f "${homedir}/.p10k.zsh" ]; then
-    cat > "${homedir}/.p10k.zsh" << 'EOL'
-# Enable Powerlevel10k instant prompt
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
+# Source pyenv initialization first
+export PYENV_ROOT="$HOME/.pyenv"
+[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-EOL
-fi
+# Source zshrc with proper paths
+source ~/.zshrc
 print_success "Powerlevel10k configured"
-
-# Source zshrc
-print_step "Sourcing zshrc..."
-source ${homedir}/.zshrc
-print_success "Shell configuration loaded"
 
 # Configure Touch ID for sudo
 print_header "Configuring Security"
