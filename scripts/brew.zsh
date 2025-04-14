@@ -158,13 +158,13 @@ if [ "$install_go" = "y" ]; then
     export PATH="$GOENV_ROOT/bin:$PATH"
     
     # Install Go version if it doesn't exist
-    if ! goenv versions | grep -q "1.22.1"; then
-        print_step "Installing Go 1.22.1..."
-        goenv install 1.22.1
+    if ! goenv versions | grep -q "1.24.2"; then
+        print_step "Installing Go 1.24.2..."
+        goenv install 1.24.2
         goenv rehash
-        goenv global 1.22.1
+        goenv global 1.24.2
     else
-        print_success "Go 1.22.1 is already installed"
+        print_success "Go 1.24.2 is already installed"
     fi
     
     print_success "Go environment configured"
