@@ -112,6 +112,8 @@ if [ "$install_python" = "y" ]; then
     # Initialize pyenv
     export PYENV_ROOT="$HOME/.pyenv"
     export PATH="$PYENV_ROOT/bin:$PATH"
+    export PIPX_ROOT="$HOME/.local"
+    export PATH="$PIPX_ROOT/bin:$PATH"
     eval "$(pyenv init -)"
     eval "$(pyenv virtualenv-init -)"
     
@@ -119,12 +121,13 @@ if [ "$install_python" = "y" ]; then
     if ! pyenv versions | grep -q "3.12.2"; then
         print_step "Installing Python 3.12.2..."
         pyenv install 3.12.2
+        pyenv rehash
+        pyenv global 3.12.2
     else
         print_success "Python 3.12.2 is already installed"
     fi
     
     # Set global Python version
-    pyenv global 3.12.2
     
     # Install pip packages in global environment
     print_step "Installing global pip packages..."
@@ -132,10 +135,8 @@ if [ "$install_python" = "y" ]; then
     pip install --upgrade pip
 
     # Upgrade and install packages in global virtualenv
-    pyenv activate global
-    pip install --upgrade pip
     pip install ntfy
-    pyenv deactivate
+    pyenv rehash
     
     print_success "Python environment configured"
 else
@@ -148,33 +149,24 @@ else
     sed -i '' '28s/^/#/' ${dotfiledir}/.zshrc
 fi
 
-# If private repository is not cloned, comment out GPG-related lines in .zshrc
-if [ ! -d "${dotfiledir}/private" ]; then
-    print_info "Private repository not found, commenting out GPG-related lines..."
-    sed -i '' '99s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '101s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '102s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '104s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '105s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '106s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '107s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '108s/^/#/' ${dotfiledir}/.zshrc
-fi
-
 if [ "$install_go" = "y" ]; then
     print_step "Installing Go environment..."
     brew install goenv --HEAD
+
+    eval "$(goenv init -)"
+    export GOENV_ROOT="$HOME/.goenv"
+    export PATH="$GOENV_ROOT/bin:$PATH"
     
     # Install Go version if it doesn't exist
     if ! goenv versions | grep -q "1.22.1"; then
         print_step "Installing Go 1.22.1..."
         goenv install 1.22.1
+        goenv rehash
+        goenv global 1.22.1
     else
         print_success "Go 1.22.1 is already installed"
     fi
     
-    goenv global 1.22.1
-    goenv rehash
     print_success "Go environment configured"
 else
     print_info "Skipping Go installation"
@@ -188,15 +180,18 @@ if [ "$install_ruby" = "y" ]; then
     brew install rbenv
     brew install ruby-build
     
+    eval "$(rbenv init -)"
+    export RBENV_ROOT="$HOME/.rbenv"
+    export PATH="$RBENV_ROOT/bin:$PATH"
+
     # Install Ruby version if it doesn't exist
     if ! rbenv versions | grep -q "3.3.0"; then
         print_step "Installing Ruby 3.3.0..."
         rbenv install 3.3.0
+        rbenv global 3.3.0
     else
         print_success "Ruby 3.3.0 is already installed"
     fi
-    
-    rbenv global 3.3.0
     
     # Install gems if not already installed
     if ! gem list | grep -q "rails"; then
@@ -213,7 +208,6 @@ if [ "$install_ruby" = "y" ]; then
         print_success "Bundler is already installed"
     fi
     
-    rbenv rehash
     print_success "Ruby environment configured"
 else
     print_info "Skipping Ruby installation"
@@ -227,12 +221,15 @@ if [ "$install_rust" = "y" ]; then
     
     # Check if rustup is already installed
     if ! command -v rustup &> /dev/null; then
-        brew install rustup-init
+        brew install rustup
         rustup-init -y
     else
         print_success "Rust is already installed"
     fi
     
+    export CARGO_ROOT="$HOME/.cargo"
+    export PATH="$CARGO_ROOT/bin:$PATH"
+
     # Ensure the default toolchain is installed
     rustup default stable
     
@@ -467,14 +464,14 @@ else
 fi
 
 ###############################################################################
-# Cleanup                                                                      #
+# Final Configuration                                                         #
 ###############################################################################
 
-print_header "Cleaning Up"
+print_header "Final Configuration"
 
-# If private repository is not cloned, comment out GPG-related lines in .zshrc
-if [ ! -d "${dotfiledir}/private" ]; then
-    print_info "Private repository not found, commenting out GPG-related lines..."
+# Check if private repository has content (not just the directory)
+if [ -z "$(ls -A ${dotfiledir}/private 2>/dev/null)" ]; then
+    print_info "Private repository is empty, commenting out GPG-related lines..."
     sed -i '' '99s/^/#/' ${dotfiledir}/.zshrc
     sed -i '' '101s/^/#/' ${dotfiledir}/.zshrc
     sed -i '' '102s/^/#/' ${dotfiledir}/.zshrc
@@ -485,12 +482,7 @@ if [ ! -d "${dotfiledir}/private" ]; then
     sed -i '' '108s/^/#/' ${dotfiledir}/.zshrc
 fi
 
-print_step "Running cleanup..."
-brew cleanup
-print_success "Homebrew cleanup complete"
-
-print_header "🎉 Homebrew Installation Complete! 🎉"
-print_info "All requested packages have been installed"
+print_success "Installation complete! 🎉"
 
 # Start Services
 echo "Starting Services (grant permissions)..."
