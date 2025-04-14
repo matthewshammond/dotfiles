@@ -25,6 +25,7 @@ This repository contains my personal dotfiles and system configuration, designed
 
 ## 🚀 Quick Start
 
+### Method 1: Clone and Install
 1. Clone this repository:
    ```bash
    git clone https://github.com/matthewshammond/dotfiles.git ~/.dotfiles
@@ -33,8 +34,13 @@ This repository contains my personal dotfiles and system configuration, designed
 2. Run the installation script:
    ```bash
    cd ~/.dotfiles
-   ./install.zsh "$HOME"
+   ./install.zsh
    ```
+
+### Method 2: One-Line Install
+```bash
+curl -fsSL https://raw.githubusercontent.com/matthewshammond/dotfiles/main/run.sh | bash
+```
 
 3. Follow the interactive prompts to customize your installation.
 

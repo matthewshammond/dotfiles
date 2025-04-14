@@ -107,7 +107,7 @@ if [ "$install_python" = "y" ]; then
     print_step "Installing Python environment..."
     
     # Install pyenv and pyenv-virtualenv
-    brew install pyenv pyenv-virtualenv
+    brew install pyenv pyenv-virtualenv xz
     
     # Initialize pyenv
     export PYENV_ROOT="$HOME/.pyenv"
@@ -178,25 +178,25 @@ fi
 if [ "$install_ruby" = "y" ]; then
     print_step "Installing Ruby environment..."
     brew install rbenv
-    brew install ruby-build
     
     eval "$(rbenv init -)"
     export RBENV_ROOT="$HOME/.rbenv"
     export PATH="$RBENV_ROOT/bin:$PATH"
 
     # Install Ruby version if it doesn't exist
-    if ! rbenv versions | grep -q "3.3.0"; then
-        print_step "Installing Ruby 3.3.0..."
-        rbenv install 3.3.0
-        rbenv global 3.3.0
+    if ! rbenv versions | grep -q "3.4.2"; then
+        print_step "Installing Ruby 3.4.2..."
+        rbenv install 3.4.2
+        rbenv global 3.4.2
+        gem update --system
     else
-        print_success "Ruby 3.3.0 is already installed"
+        print_success "Ruby 3.4.2 is already installed"
     fi
     
     # Install gems if not already installed
     if ! gem list | grep -q "rails"; then
         print_step "Installing Rails..."
-        gem install rails -v 7.1.3.2
+        gem install rails
     else
         print_success "Rails is already installed"
     fi
@@ -428,7 +428,6 @@ if [ "$install_pentest_tools" = "y" ]; then
     brew install sqlmap         # SQL injection tool
     brew install telnet         # Network protocol
     brew install theharvester   # Email/domain recon tool
-    brew install volatility     # Memory forensics
     brew install wpscanteam/tap/wpscan  # WordPress scanner
     print_success "CLI pentesting tools installed"
 

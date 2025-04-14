@@ -52,16 +52,8 @@ print_info() {
   printf "${PURPLE}${INFO} %s${NC}\n" "$1"
 }
 
-# Check arguments
-if [ "$#" -ne 1 ]; then
-  print_error "Usage: install.zsh <home_directory>"
-  exit 1
-fi
-
-homedir=$1
-export homedir
-dotfiledir=${homedir}/.dotfiles
-export dotfiledir
+# Set the dotfiles directory
+dotfiledir="$HOME/.dotfiles"
 
 # Print welcome message
 print_header "Welcome to the macOS System Setup Script!"
@@ -81,6 +73,7 @@ done 2>/dev/null &
 # Prevent system sleep during install
 print_step "Preventing system sleep during installation..."
 /usr/bin/caffeinate -d &
+CAFFEINATE_PID=$!
 
 # Check and setup logging
 print_step "Setting up logging..."
@@ -208,7 +201,7 @@ print_header "Setting up GPG"
 if [[ "$(git config --get remote.origin.url)" == *"git@github.com"* ]]; then
   print_step "Configuring GPG..."
   gpgfiles=('dirmngr.conf' 'gpg-agent.conf' 'gpg.conf')
-  cd ${homedir}/.gnupg
+  cd ${HOME}/.gnupg
   for file in ${gpgfiles}; do
     [ -f "$file" ] && rm -rf $file
     print_info "Removed $file"
@@ -539,6 +532,9 @@ echo "  ${ARROW} Set up VPN configurations"
 echo "  ${ARROW} Review and adjust privacy settings"
 
 print_warning "Please complete these steps to finish setting up your system"
+
+# At the end of the script, before the final success message
+kill $CAFFEINATE_PID
 
 print_header "Installation Complete! 🎉"
 print_success "Your development environment has been set up successfully"
