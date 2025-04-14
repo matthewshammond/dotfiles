@@ -5,6 +5,5 @@
 \.ntfy.yml
 \.ssh/
 hosts*
-Raycast.rayconfig
 # Ignore all variations of .DS_Store in all directories
 **/[Dd][Ss]_[Ss]tore
