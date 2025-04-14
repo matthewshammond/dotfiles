@@ -315,7 +315,7 @@ gpged ()
 }
 
 alias gpgdd='gpgtar -d' # Decrypt directory
-alias load='load.sh'
+alias load='load-ssh.sh'
 
 # ssh
 alias gemini="ssh -J voyager Gemini -t '/usr/local/bin/tmux -CC attach || /usr/local/bin/tmux -CC'"
