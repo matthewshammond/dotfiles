@@ -109,11 +109,11 @@ if [ "$install_python" = "y" ]; then
     # Install pyenv and pyenv-virtualenv
     brew install pyenv pyenv-virtualenv
     
-    # Add pyenv to shell
-    echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.zshrc
-    echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.zshrc
-    echo 'eval "$(pyenv init -)"' >> ~/.zshrc
-    echo 'eval "$(pyenv virtualenv-init -)"' >> ~/.zshrc
+    # Initialize pyenv
+    export PYENV_ROOT="$HOME/.pyenv"
+    export PATH="$PYENV_ROOT/bin:$PATH"
+    eval "$(pyenv init -)"
+    eval "$(pyenv virtualenv-init -)"
     
     # Install Python versions if they don't exist
     if ! pyenv versions | grep -q "3.12.2"; then
@@ -126,17 +126,12 @@ if [ "$install_python" = "y" ]; then
     # Set global Python version
     pyenv global 3.12.2
     
-    # Create and activate virtual environments
-    print_step "Setting up virtual environments..."
-    if [ ! -d "$HOME/.pyenv/versions/neovim" ]; then
-        pyenv virtualenv 3.12.2 neovim
-    fi
-    if [ ! -d "$HOME/.pyenv/versions/global" ]; then
-        pyenv virtualenv 3.12.2 global
-    fi
-    
     # Install pip packages in global environment
     print_step "Installing global pip packages..."
+    # Upgrade system pip
+    pip install --upgrade pip
+
+    # Upgrade and install packages in global virtualenv
     pyenv activate global
     pip install --upgrade pip
     pip install ntfy
@@ -151,6 +146,19 @@ else
     sed -i '' '24s/^/#/' ${dotfiledir}/.zshrc
     sed -i '' '27s/^/#/' ${dotfiledir}/.zshrc
     sed -i '' '28s/^/#/' ${dotfiledir}/.zshrc
+fi
+
+# If private repository is not cloned, comment out GPG-related lines in .zshrc
+if [ ! -d "${dotfiledir}/private" ]; then
+    print_info "Private repository not found, commenting out GPG-related lines..."
+    sed -i '' '99s/^/#/' ${dotfiledir}/.zshrc
+    sed -i '' '101s/^/#/' ${dotfiledir}/.zshrc
+    sed -i '' '102s/^/#/' ${dotfiledir}/.zshrc
+    sed -i '' '104s/^/#/' ${dotfiledir}/.zshrc
+    sed -i '' '105s/^/#/' ${dotfiledir}/.zshrc
+    sed -i '' '106s/^/#/' ${dotfiledir}/.zshrc
+    sed -i '' '107s/^/#/' ${dotfiledir}/.zshrc
+    sed -i '' '108s/^/#/' ${dotfiledir}/.zshrc
 fi
 
 if [ "$install_go" = "y" ]; then
@@ -370,7 +378,7 @@ brew install --cask sf-symbols       # Apple SF Symbols
 
 # Fonts
 brew install --cask font-hack-nerd-font    # Hack Nerd Font
-brew install --cask font-jetbrains-mono    # JetBrains Mono
+brew install --cask font-jetbrains-mono-nerd-font # JetBrains Mono
 
 print_success "GUI applications installed"
 
@@ -463,6 +471,19 @@ fi
 ###############################################################################
 
 print_header "Cleaning Up"
+
+# If private repository is not cloned, comment out GPG-related lines in .zshrc
+if [ ! -d "${dotfiledir}/private" ]; then
+    print_info "Private repository not found, commenting out GPG-related lines..."
+    sed -i '' '99s/^/#/' ${dotfiledir}/.zshrc
+    sed -i '' '101s/^/#/' ${dotfiledir}/.zshrc
+    sed -i '' '102s/^/#/' ${dotfiledir}/.zshrc
+    sed -i '' '104s/^/#/' ${dotfiledir}/.zshrc
+    sed -i '' '105s/^/#/' ${dotfiledir}/.zshrc
+    sed -i '' '106s/^/#/' ${dotfiledir}/.zshrc
+    sed -i '' '107s/^/#/' ${dotfiledir}/.zshrc
+    sed -i '' '108s/^/#/' ${dotfiledir}/.zshrc
+fi
 
 print_step "Running cleanup..."
 brew cleanup
