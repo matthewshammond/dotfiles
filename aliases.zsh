@@ -268,18 +268,18 @@ gcpr()
 # create public gist
 gcg ()
 {
-	if [ -z "$1" && -z "$2" ]; then
-		echo 'gcg <filename> <description>';
-		return 1;
-	fi;
-    gh gist create --public "$1" -d "$2"
+  if [ -z "$1" ] || [ -z "$2" ]; then
+    echo 'gcg <filename> <description>';
+    return 1;
+  fi;
+  gh gist create --public "$1" -d "$2"
 }
 
 # usage: gcpg <filename> <description>
 # create secret gist
 gcpg ()
 {
-	if [ -z "$1" && -z "$2" ]; then
+  if [ -z "$1" ] || [ -z "$2" ]; then
 		echo 'gcpg <filename> <description>';
 		return 1;
 	fi;
