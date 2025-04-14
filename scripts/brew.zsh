@@ -341,7 +341,6 @@ brew install --cask 1password-cli    # 1Password CLI
 brew install --cask gpg-suite        # GPG tools
 brew install --cask little-snitch    # Network monitor
 brew install --cask micro-snitch     # Microphone monitor
-brew install --cask private-internet-access  # VPN
 brew install --cask tailscale        # VPN
 brew install --cask tor-browser      # Privacy browser
 brew install --cask veracrypt        # Disk encryption
