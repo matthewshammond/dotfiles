@@ -519,6 +519,7 @@ echo "  ${ARROW} Configure Karabiner-Elements"
 echo "  ${ARROW} Set up Little Snitch rules"
 echo "  ${ARROW} Configure Raycast"
 echo "  ${ARROW} Install Private Internet Access (brew install --cask private-internet-access)"
+echo "  ${ARROW} Install Parallels (brew install --cask parallels)"
 
 print_step "Development Environment:"
 echo "  ${ARROW} Set up Python virtual environments"

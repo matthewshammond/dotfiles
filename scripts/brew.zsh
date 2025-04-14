@@ -359,7 +359,6 @@ brew install --cask discord          # Communication
 brew install --cask firefox          # Web browser
 brew install --cask microsoft-office # Office suite
 brew install --cask microsoft-teams  # Team collaboration
-brew install --cask parallels        # Virtualization
 brew install --cask pdf-expert       # PDF editor
 brew install --cask plex             # Media server
 brew install --cask raycast          # Launcher
