@@ -95,6 +95,40 @@ youtube ()
 	ps aux | grep -v grep | grep "$1" | awk '{print $2}';
 }
 
+# Expose Postgresql to pgadmin4
+# usage: pgproxy on <CHANGEME> <port:5433>
+# usage: pgproxy off <CHANGEME>
+pgproxy() {
+  local action=$1
+  local id=$2
+  local port=${3:-5433}  # Default to 5433 if no port is provided
+  local container="aerostatus_db-$id"
+  local proxy_name="pgproxy-$id"
+  local network="aerostatus_app-network"
+
+  if [[ -z "$action" || -z "$id" ]]; then
+    echo "Usage: pgproxy on|off <instance-id> [local-port]"
+    return 1
+  fi
+
+  if [[ "$action" == "on" ]]; then
+    echo "Starting pgproxy for $container as $proxy_name on localhost:$port..."
+    docker run -d \
+      --name "$proxy_name" \
+      --network "$network" \
+      -p "$port":5432 \
+      alpine/socat \
+      TCP-LISTEN:5432,fork,reuseaddr TCP:"$container":5432
+  elif [[ "$action" == "off" ]]; then
+    echo "Stopping pgproxy container $proxy_name..."
+    docker rm -f "$proxy_name" >/dev/null 2>&1 || echo "No running proxy found for $id"
+  else
+    echo "Invalid action: $action (use 'on' or 'off')"
+    return 1
+  fi
+}
+
+
 export EDITOR=nvim
 
 # Aliases
