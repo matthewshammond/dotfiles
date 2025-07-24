@@ -94,6 +94,7 @@ print_header "Adding Homebrew Taps"
 print_step "Tapping additional repositories..."
 brew tap FelixKratz/formulae
 brew tap koekeishiya/formulae
+brew tap jackielii/tap
 print_success "Additional repositories tapped"
 
 ###############################################################################
@@ -324,8 +325,8 @@ print_header "Installing Window Management Tools"
 
 print_step "Installing window management tools..."
 brew install sketchybar  # Status bar
-brew install skhd       # Hotkey daemon
-brew install yabai      # Window manager
+brew install skhd-zig    # Hotkey daemon
+brew install yabai       # Window manager
 print_success "Window management tools installed"
 
 ###############################################################################
