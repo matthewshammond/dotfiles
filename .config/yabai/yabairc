@@ -59,11 +59,11 @@ yabai -m rule --add app="^Notes$" space=^1
 yabai -m rule --add app="^(Safari|Tor Browser|Firefox)$" space=^2
 yabai -m rule --add app="^(Messages|Signal|Discord|Microsoft Teams)$" space=^3
 yabai -m rule --add app="^(Plex|Screen Sharing|Parallels Desktop|zoom.us|Docker Desktop)$" space=^4
-yabai -m rule --add app="^kitty$" space=^5
-yabai -m rule --add title="^(Main Terminal)$" space=^5
+yabai -m rule --add app="^Ghostty$" subrole="AXStandardWindow" space=^5
+# yabai -m rule --add title="^(Main Terminal)$" space=^5
 yabai -m rule --add app="^(Spark|Mail|Microsoft Outlook)$" space=^6
 yabai -m rule --add app="^Calendar$" space=^7
-yabai -m rule --add app!="^(Notes|Safari|Firefox|Tor Browser|kitty|Spark|Mail|Microsoft Outlook|Calendar)$" manage=off sub-layer=below
+yabai -m rule --add app!="^(Notes|Safari|Firefox|Tor Browser|Spark|Mail|Microsoft Outlook|Calendar)$" manage=off sub-layer=below
 
 #==============================Borders====================================
 # uses JankyBorders

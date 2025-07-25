@@ -52,9 +52,13 @@ cmd + shift - 0x2B : yabai -m window --toggle float;\
 # hyper - 6: yabai -m window --space 6 --focus
 # hyper - 7: yabai -m window --space 7 --focus
 
+# =============================Script Shortcuts==================================
+hyper - return : bash ~/.dotfiles/scripts/ghostty.sh
+
+
 # =============================Application Shortcuts=============================
 # cmd + alt - o : open /Applications/1Password.app
-hyper - return : open /Applications/iTerm.app; osascript -e 'tell application "System Events" to key code 23 using command down' 
+# hyper - return : open /Applications/Ghostty.app; osascript -e 'tell application "System Events" to key code 23 using command down'
 # cmd + alt - a : open /System/Applications/Calendar.app
 # cmd + alt - c : open /System/Applications/Contacts.app
 # cmd + alt - d : open /Applications/Discord.app
