@@ -20,5 +20,5 @@ keybind = global:ctrl+space=toggle_quick_terminal
 # Quick Terminal
 quick-terminal-position = bottom
 quick-terminal-screen =  mouse
-quick-terminal-autohide = false
+quick-terminal-autohide = true
 quick-terminal-animation-duration = 0
