@@ -350,7 +350,7 @@ brew install --cask veracrypt        # Disk encryption
 brew install --cask cursor           # AI-powered IDE
 brew install --cask docker           # Container platform
 brew install --cask drawio           # Diagram editor
-brew install --cask iterm2           # Terminal emulator
+brew install --cask ghostty          # Terminal emulator
 brew install --cask qgis             # GIS software
 brew install --cask rustdesk         # Remote desktop
 
