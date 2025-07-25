@@ -1,0 +1,24 @@
+# Mouse
+mouse-hide-while-typing = true
+
+# Theme
+theme = nord
+background-opacity = 0.75
+unfocused-split-opacity = 0.50
+macos-icon = glass
+
+# Window
+macos-titlebar-style = tabs
+confirm-close-surface = false
+window-height = 49
+window-width = 181
+window-save-state = always
+
+# Keybindings
+keybind = global:ctrl+space=toggle_quick_terminal
+
+# Quick Terminal
+quick-terminal-position = bottom
+quick-terminal-screen =  mouse
+quick-terminal-autohide = false
+quick-terminal-animation-duration = 0
