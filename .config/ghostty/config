@@ -16,6 +16,7 @@ window-save-state = always
 
 # Keybindings
 keybind = global:ctrl+space=toggle_quick_terminal
+keybind = alt+shift+comma=reload_config
 
 # Quick Terminal
 quick-terminal-position = bottom
