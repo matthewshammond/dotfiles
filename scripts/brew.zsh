@@ -369,8 +369,10 @@ brew install --cask signal           # Messaging
 brew install --cask gimp             # Image editor
 brew install --cask karabiner-elements  # Keyboard customizer
 brew install --cask macfuse          # File system extension
+brew install --cask notchnook        # Utility to manage and customize the notch area
 brew install --cask qlmarkdown       # QuickLook for Markdown
 brew install --cask sf-symbols       # Apple SF Symbols
+brew install --cask ubersicht        # Custom desktop widgets
 
 # Fonts
 brew install --cask font-hack-nerd-font    # Hack Nerd Font
@@ -391,7 +393,6 @@ mas install 424389933   # Final Cut Pro
 mas install 837263884   # LogTen
 mas install 1176895641  # Spark Email App
 mas install 1521133201  # Speed Player
-mas install 1630456052  # TopDrop
 mas install 1480933944  # Vimari
 mas install 1497506650  # Yubico Authenticator
 print_success "Mac App Store applications installed"
