@@ -408,7 +408,7 @@ print_header "Configuring Dock and Menu Bar"
 # Dock settings
 print_step "Configuring Dock..."
 defaults write com.apple.dock autohide -bool true
-defaults write com.apple.dock "autohide-delay" -float 0
+defaults write com.apple.dock "autohide-delay" -float 1000
 defaults write com.apple.dock "autohide-time-modifier" -float 0.5
 defaults write com.apple.dock "enable-spring-load-actions-on-all-items" -bool true
 defaults write com.apple.dock "expose-animation-duration" -float 0.1
@@ -426,7 +426,7 @@ defaults write com.apple.dock "show-process-indicators" -bool true
 defaults write com.apple.dock "show-recents" -bool false
 defaults write com.apple.dock showLaunchpadGestureEnabled -bool false
 defaults write com.apple.dock showhidden -bool true
-defaults write com.apple.dock tilesize -int 32
+defaults write com.apple.dock tilesize -int 1
 
 # Disable click wallpaper to show desktop
 defaults write com.apple.WindowManager EnableStandardClickToShowDesktop -bool false
@@ -518,6 +518,7 @@ echo "  ${ARROW} Sign in to browsers and set up sync"
 echo "  ${ARROW} Configure Karabiner-Elements"
 echo "  ${ARROW} Set up Little Snitch rules"
 echo "  ${ARROW} Configure Raycast"
+echo "  ${ARROW} Move ~/.dotfiles/.config/Übersicht/widgets/flip-clock.widget to ~/Library/Application Support/Übersicht/widgets"
 echo "  ${ARROW} Install Private Internet Access (brew install --cask private-internet-access)"
 echo "  ${ARROW} Install Parallels (brew install --cask parallels)"
 
