@@ -121,8 +121,6 @@ apple:subscribe("mouse.clicked", function()
 			local theme_name = ThemeManager.get_current_theme_name()
 			local themes_dir = os.getenv("CONFIG_DIR") and (os.getenv("CONFIG_DIR") .. "/themes") or "themes"
 			
-			-- Debug: Log the theme change
-			sbar.exec(string.format('osascript -e \'display notification "Theme changed to: %s" with title "Debug"\'', theme_name))
 			local image_extensions = {"png", "jpg", "jpeg", "gif", "bmp", "tiff", "webp"}
 			local wallpaper_path = nil
 			
@@ -133,7 +131,6 @@ apple:subscribe("mouse.clicked", function()
 				if file then
 					file:close()
 					wallpaper_path = test_path
-					sbar.exec(string.format('osascript -e \'display notification "Found wallpaper: %s" with title "Debug"\'', test_path))
 					break
 				end
 			end
@@ -176,13 +173,11 @@ apple:subscribe("mouse.clicked", function()
 				
 				if result == 0 or result == true then
 					os.execute("killall WallpaperAgent 2>/dev/null")
-					sbar.exec(string.format('osascript -e \'display notification "%s (wallpaper set)" with title "SketchyBar Theme"\'', new_theme.name))
-				else
-					sbar.exec(string.format('osascript -e \'display notification "%s (wallpaper failed)" with title "SketchyBar Theme"\'', new_theme.name))
 				end
-			else
-				sbar.exec(string.format('osascript -e \'display notification "%s" with title "SketchyBar Theme"\'', new_theme.name))
 			end
+			
+			-- Show theme change notification
+			sbar.exec(string.format('osascript -e \'display notification "%s" with title "SketchyBar Theme"\'', new_theme.name))
 
 			-- Trigger the theme_changed event
 			sbar.exec("sketchybar --trigger theme_changed")

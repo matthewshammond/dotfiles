@@ -263,16 +263,11 @@ function ThemeManager.apply_theme()
     -- Try to set wallpaper for the theme
     local wallpaper_path = find_wallpaper_for_theme(theme_name)
     if wallpaper_path then
-        local success = set_wallpaper_for_all_spaces(wallpaper_path)
-        if success then
-            sbar.exec("osascript -e 'display notification \"Theme: " .. theme.name .. " (wallpaper set)\" with title \"SketchyBar\"'")
-        else
-            sbar.exec("osascript -e 'display notification \"Theme: " .. theme.name .. " (wallpaper failed)\" with title \"SketchyBar\"'")
-        end
-    else
-        -- No wallpaper found, just show theme change notification
-        sbar.exec("osascript -e 'display notification \"Theme: " .. theme.name .. '" with title "SketchyBar"\'')
+        set_wallpaper_for_all_spaces(wallpaper_path)
     end
+    
+    -- Show theme change notification
+    sbar.exec("osascript -e 'display notification \"Theme: " .. theme.name .. '" with title "SketchyBar"\'')
 
     -- Trigger refresh for all items
     sbar.trigger("theme_changed")

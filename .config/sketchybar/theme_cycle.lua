@@ -180,16 +180,11 @@ if os.getenv("CONFIG_DIR") or true then
     -- Try to set wallpaper for the theme
     local wallpaper_path = find_wallpaper_for_theme(theme_name)
     if wallpaper_path then
-        local success = set_wallpaper_for_all_spaces(wallpaper_path)
-        if success then
-            os.execute(string.format('osascript -e \'display notification "%s (wallpaper set)" with title "SketchyBar Theme"\'', theme.name))
-        else
-            os.execute(string.format('osascript -e \'display notification "%s (wallpaper failed)" with title "SketchyBar Theme"\'', theme.name))
-        end
-    else
-        -- No wallpaper found, just show theme change notification
-        os.execute(string.format('osascript -e \'display notification "%s" with title "SketchyBar Theme"\'', theme.name))
+        set_wallpaper_for_all_spaces(wallpaper_path)
     end
+    
+    -- Show theme change notification
+    os.execute(string.format('osascript -e \'display notification "%s" with title "SketchyBar Theme"\'', theme.name))
     
     -- Trigger the theme_changed event to recreate spaces and update all widgets
     os.execute('sketchybar --trigger theme_changed')
