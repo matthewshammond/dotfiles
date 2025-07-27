@@ -8,14 +8,17 @@ sbar.exec("killall cpu_load >/dev/null; $CONFIG_DIR/helpers/event_providers/cpu_
 
 local cpu = sbar.add("graph", "widgets.cpu" , 42, {
   position = "right",
-  graph = { color = colors.yellow, },
+  graph = { color = colors.yellow },
   background = {
     height = 28,
-    color = colors.transparent,
+    color = colors.transparent or 0x00000000,  -- Fallback to hex value
     border_color = { alpha = 0 },
     drawing = true,
   },
-  icon = { string = icons.cpu },
+  icon = { 
+    string = icons.cpu,
+    color = colors.cpu_widget_icon or colors.white,
+  },
   label = {
     string = "cpu ??%",
     font = {
@@ -31,26 +34,65 @@ local cpu = sbar.add("graph", "widgets.cpu" , 42, {
   padding_right = settings.paddings + 6
 })
 
+-- Function to update CPU colors based on current theme
+local function update_cpu_colors()
+    local query_result = cpu:query()
+    local label_string = query_result and query_result.label and query_result.label.string or "cpu 0%"
+    local load = tonumber(label_string:match("cpu (%d+)%%") or "0")
+    
+    -- Use custom widget colors if available, otherwise fall back to standard colors
+    local graph_color = colors.cpu_widget_graph or colors.orange
+    local text_color = colors.cpu_widget_text or colors.white
+    
+    if load > 30 then
+        if load < 60 then
+            graph_color = colors.cpu_widget_graph or colors.yellow
+        elseif load < 80 then
+            graph_color = colors.cpu_widget_graph or colors.orange
+        else
+            graph_color = colors.cpu_widget_graph or colors.red
+        end
+    end
+    
+    cpu:set({
+        graph = { color = graph_color },
+        icon = { color = colors.cpu_widget_icon or colors.white },
+        label = { color = text_color },
+    })
+end
+
 cpu:subscribe("cpu_update", function(env)
   -- Also available: env.user_load, env.sys_load
   local load = tonumber(env.total_load)
   cpu:push({ load / 100. })
 
-  local color = colors.orange
+  -- Use custom widget colors if available, otherwise fall back to standard colors
+  local graph_color = colors.cpu_widget_graph or colors.orange
+  local text_color = colors.cpu_widget_text or colors.white
+  
   if load > 30 then
     if load < 60 then
-      color = colors.yellow
+      graph_color = colors.cpu_widget_graph or colors.yellow
     elseif load < 80 then
-      color = colors.orange
+      graph_color = colors.cpu_widget_graph or colors.orange
     else
-      color = colors.red
+      graph_color = colors.cpu_widget_graph or colors.red
     end
   end
 
   cpu:set({
-    graph = { color = color },
-    label = "cpu " .. env.total_load .. "%",
+    graph = { color = graph_color },
+    icon = { color = colors.cpu_widget_icon or colors.white },
+    label = { 
+      string = "cpu " .. env.total_load .. "%",
+      color = text_color,
+    },
   })
+end)
+
+-- Subscribe to theme changes
+cpu:subscribe("theme_changed", function()
+    update_cpu_colors()
 end)
 
 cpu:subscribe("mouse.clicked", function(env)
@@ -59,7 +101,10 @@ end)
 
 -- Background around the cpu item
 sbar.add("bracket", "widgets.cpu.bracket", { cpu.name }, {
-  background = { color = colors.transparent, border_width = 0, }
+  background = { 
+    color = colors.cpu_widget_bg or colors.transparent, 
+    border_width = 0, 
+  }
 })
 
 -- Background around the cpu item

@@ -22,6 +22,7 @@ local wifi_up = sbar.add("item", "widgets.wifi1", {
 			size = 9.0,
 		},
 		string = icons.wifi.upload,
+		color = colors.wifi_widget_icon or colors.white,
 	},
 	label = {
 		font = {
@@ -29,7 +30,7 @@ local wifi_up = sbar.add("item", "widgets.wifi1", {
 			style = settings.font.style_map["Bold"],
 			size = 9.0,
 		},
-		color = colors.yellow,
+		color = colors.wifi_widget_upload or colors.yellow,
 		string = "en0 Bps",
 	},
 	y_offset = 4,
@@ -45,6 +46,7 @@ local wifi_down = sbar.add("item", "widgets.wifi2", {
 			size = 9.0,
 		},
 		string = icons.wifi.download,
+		color = colors.wifi_widget_icon or colors.white,
 	},
 	label = {
 		font = {
@@ -52,7 +54,7 @@ local wifi_down = sbar.add("item", "widgets.wifi2", {
 			style = settings.font.style_map["Bold"],
 			size = 9.0,
 		},
-		color = colors.blue,
+		color = colors.wifi_widget_download or colors.blue,
 		string = "en0 Bps",
 	},
 	y_offset = -4,
@@ -69,7 +71,7 @@ local wifi_bracket = sbar.add("bracket", "widgets.wifi.bracket", {
 	wifi_up.name,
 	wifi_down.name,
 }, {
-	background = { color = colors.transparent },
+	background = { color = colors.wifi_widget_bg or colors.transparent },
 	popup = { align = "center", height = 30 },
 })
 
@@ -93,7 +95,7 @@ local ssid = sbar.add("item", {
 	},
 	background = {
 		height = 2,
-		color = colors.grey,
+		color = colors.grey or 0xffd5c4a1,  -- Fallback to hex value if colors.grey is not available
 		y_offset = -15,
 	},
 })
@@ -158,17 +160,20 @@ local router = sbar.add("item", {
 sbar.add("item", { position = "right", width = settings.group_paddings })
 
 wifi_up:subscribe("network_update", function(env)
-	local up_color = (env.upload == "000 Bps") and colors.grey or colors.yellow
-	local down_color = (env.download == "000 Bps") and colors.grey or colors.blue
+	-- Use custom theme colors if available, otherwise fall back to standard colors
+	local up_color = (env.upload == "000 Bps") and colors.grey or (colors.wifi_widget_upload or colors.yellow)
+	local down_color = (env.download == "000 Bps") and colors.grey or (colors.wifi_widget_download or colors.blue)
+	local icon_color = colors.wifi_widget_icon or colors.white
+	
 	wifi_up:set({
-		icon = { color = up_color },
+		icon = { color = icon_color },
 		label = {
 			string = env.upload,
 			color = up_color,
 		},
 	})
 	wifi_down:set({
-		icon = { color = down_color },
+		icon = { color = icon_color },
 		label = {
 			string = env.download,
 			color = down_color,
@@ -182,10 +187,21 @@ wifi:subscribe({ "wifi_change", "system_woke" }, function(env)
 		wifi:set({
 			icon = {
 				string = connected and icons.wifi.connected or icons.wifi.disconnected,
-				color = connected and colors.white or colors.red,
+				color = connected and (colors.wifi_widget_icon or colors.white) or colors.red,
 			},
 		})
 	end)
+end)
+
+-- Subscribe to theme changes to update colors
+wifi_up:subscribe("theme_changed", function()
+    -- Trigger a network update to refresh colors
+    sbar.trigger("network_update")
+end)
+
+wifi_down:subscribe("theme_changed", function()
+    -- Trigger a network update to refresh colors
+    sbar.trigger("network_update")
 end)
 
 local function hide_details()

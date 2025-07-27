@@ -1,6 +1,8 @@
 local colors = require("colors")
 local settings = require("settings")
 local icons = require("icons")
+local theme_system = require("themes")
+local ThemeManager = theme_system.manager
 
 local front_app = sbar.add("item", "front_app", {
 	icon = {
@@ -14,7 +16,6 @@ local front_app = sbar.add("item", "front_app", {
 	label = {
 		color = colors.bg2,
 		padding_right = 12,
-		min_width = 80,
 		align = "center",
 		font = {
 			family = settings.font.numbers,
@@ -40,6 +41,23 @@ front_app:subscribe("front_app_switched", function(env)
 	})
 end)
 
+-- Function to check if current theme is minimal
+local function is_minimal_theme()
+    local theme = ThemeManager.get_current_theme()
+    return theme and theme.minimal_spaces
+end
+
+-- Only enable toggle for non-minimal themes
 front_app:subscribe("mouse.clicked", function(env)
-	sbar.trigger("swap_menus_and_spaces")
+    if not is_minimal_theme() then
+        sbar.trigger("swap_menus_and_spaces")
+    end
+end)
+
+-- Subscribe to theme changes to update behavior
+front_app:subscribe("theme_changed", function()
+    -- For minimal themes, ensure front_app is always visible
+    if is_minimal_theme() then
+        front_app:set({ drawing = true })
+    end
 end)

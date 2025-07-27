@@ -29,7 +29,8 @@ local remaining_time = sbar.add("item", {
 	},
 })
 
-battery:subscribe({ "routine", "power_source_change", "system_woke" }, function()
+-- Function to update battery colors based on current theme
+local function update_battery_colors()
 	sbar.exec("pmset -g batt", function(batt_info)
 		local icon = "!"
 		local label = "?"
@@ -40,7 +41,7 @@ battery:subscribe({ "routine", "power_source_change", "system_woke" }, function(
 			label = charge .. "%"
 		end
 
-		local color = colors.green
+		local battery_color = colors.green
 		local charging, _, _ = batt_info:find("AC Power")
 
 		if charging then
@@ -54,10 +55,10 @@ battery:subscribe({ "routine", "power_source_change", "system_woke" }, function(
 				icon = icons.battery._50
 			elseif found and charge > 20 then
 				icon = icons.battery._25
-				color = colors.orange
+				battery_color = colors.orange
 			else
 				icon = icons.battery._0
-				color = colors.red
+				battery_color = colors.red
 			end
 		end
 
@@ -71,9 +72,67 @@ battery:subscribe({ "routine", "power_source_change", "system_woke" }, function(
 				string = icon,
 				color = color,
 			},
-			label = { string = lead .. label },
+			label = {
+				string = lead .. label,
+				color = colors.battery_widget_text or colors.white,
+			},
 		})
 	end)
+end
+
+battery:subscribe({ "routine", "power_source_change", "system_woke" }, function()
+	sbar.exec("pmset -g batt", function(batt_info)
+		local icon = "!"
+		local label = "?"
+
+		local found, _, charge = batt_info:find("(%d+)%%")
+		if found then
+			charge = tonumber(charge)
+			label = charge .. "%"
+		end
+
+		local battery_color = colors.green
+		local charging, _, _ = batt_info:find("AC Power")
+
+		if charging then
+			icon = icons.battery.charging
+		else
+			if found and charge > 80 then
+				icon = icons.battery._100
+			elseif found and charge > 60 then
+				icon = icons.battery._75
+			elseif found and charge > 40 then
+				icon = icons.battery._50
+			elseif found and charge > 20 then
+				icon = icons.battery._25
+				battery_color = colors.orange
+			else
+				icon = icons.battery._0
+				battery_color = colors.red
+			end
+		end
+
+		local lead = ""
+		if found and charge < 10 then
+			lead = "0"
+		end
+
+		battery:set({
+			icon = {
+				string = icon,
+				color = battery_color,
+			},
+			label = {
+				string = lead .. label,
+				color = colors.battery_widget_text or colors.white,
+			},
+		})
+	end)
+end)
+
+-- Subscribe to theme changes
+battery:subscribe("theme_changed", function()
+	update_battery_colors()
 end)
 
 battery:subscribe("mouse.clicked", function(env)
@@ -90,7 +149,7 @@ battery:subscribe("mouse.clicked", function(env)
 end)
 
 sbar.add("bracket", "widgets.battery.bracket", { battery.name }, {
-	background = { color = colors.bg1 },
+	background = { color = colors.battery_widget_bg or colors.transparent },
 })
 
 sbar.add("item", "widgets.battery.padding", {
