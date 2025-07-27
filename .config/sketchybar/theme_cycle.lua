@@ -183,6 +183,64 @@ if os.getenv("CONFIG_DIR") or true then
         set_wallpaper_for_all_spaces(wallpaper_path)
     end
     
+    -- Update Neovim theme if specified in the current theme
+    if theme.neovim_theme then
+        local nvim_theme_file = os.getenv("HOME") .. "/.config/nvim/lua/config/theme.lua"
+        local file = io.open(nvim_theme_file, "w")
+        if file then
+            file:write('return "' .. theme.neovim_theme .. '"\n')
+            file:close()
+            print("Updated Neovim theme to: " .. theme.neovim_theme)
+        else
+            print("Warning: Could not update Neovim theme file: " .. nvim_theme_file)
+        end
+    end
+    
+    -- Update Ghostty theme and opacity if specified in the current theme
+    if theme.ghostty_theme or theme.ghostty_opacity then
+        local ghostty_config_file = os.getenv("HOME") .. "/.config/ghostty/config"
+        local file = io.open(ghostty_config_file, "r")
+        if file then
+            local content = file:read("*all")
+            file:close()
+            local new_content = content
+            
+            -- Replace the theme line if specified
+            if theme.ghostty_theme then
+                new_content = new_content:gsub("theme = [^\n]+", "theme = " .. theme.ghostty_theme)
+                print("Updated Ghostty theme to: " .. theme.ghostty_theme)
+            end
+            
+            -- Replace the background-opacity line if specified
+            if theme.ghostty_opacity then
+                new_content = new_content:gsub("background%-opacity = [^\n]+", "background-opacity = " .. theme.ghostty_opacity)
+                print("Updated Ghostty opacity to: " .. theme.ghostty_opacity)
+            end
+            
+            -- Write the updated content back
+            local write_file = io.open(ghostty_config_file, "w")
+            if write_file then
+                write_file:write(new_content)
+                write_file:close()
+                
+                -- Trigger Ghostty config reload via AppleScript
+                local applescript = [[
+                    tell application "System Events"
+                        tell process "Ghostty"
+                            click menu item "Reload Configuration" of menu "Ghostty" of menu bar item "Ghostty" of menu bar 1
+                        end tell
+                    end tell
+                ]]
+                os.execute("osascript -e '" .. applescript .. "' 2>/dev/null")
+                print("Triggered Ghostty config reload")
+            else
+                print("Warning: Could not write to Ghostty config file: " .. ghostty_config_file)
+            end
+        else
+            print("Warning: Could not read Ghostty config file: " .. ghostty_config_file)
+        end
+    end
+    
     -- Show theme change notification
     os.execute(string.format('osascript -e \'display notification "%s" with title "SketchyBar Theme"\'', theme.name))
     

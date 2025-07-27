@@ -25,6 +25,15 @@ return {
 	-- Theme behavior: true for minimal themes (icons only), false for full themes (with app icons)
 	minimal_spaces = true,
 
+	-- Neovim theme name (uncomment and set to automatically change Neovim theme when switching sketchybar themes)
+	-- neovim_theme = "nord",
+
+	-- Ghostty theme name (uncomment and set to automatically change Ghostty theme when switching sketchybar themes)
+	-- ghostty_theme = "nord",
+
+	-- Ghostty background opacity (uncomment and set to automatically change Ghostty opacity when switching sketchybar themes)
+	-- ghostty_opacity = 0.75, -- Example: 0.75 for 75% opacity, 1.0 for fully opaque
+
 	-- ========================================
 	-- WIDGET CONFIGURATION
 	-- ========================================

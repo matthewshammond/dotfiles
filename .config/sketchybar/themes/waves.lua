@@ -2,6 +2,15 @@ return {
 	name = "Waves",
 	minimal_spaces = true,
 
+	-- Neovim theme name (uncomment and set to automatically change Neovim theme when switching sketchybar themes)
+	neovim_theme = "nord",
+
+	-- Ghostty theme name (uncomment and set to automatically change Ghostty theme when switching sketchybar themes)
+	ghostty_theme = "nord",
+
+	-- Ghostty background opacity (uncomment and set to automatically change Ghostty opacity when switching sketchybar themes)
+	ghostty_opacity = 0.75, -- Medium opacity for waves theme
+
 	-- ========================================
 	-- WIDGET CONFIGURATION
 	-- ========================================
@@ -79,7 +88,7 @@ return {
 
 		volume_widget_bg = transparent("#ffffff", 0), -- Transparent background
 		volume_widget_text = color("#CB6E02"), -- White text for better contrast
-		volume_widget_icon = color("#ffffff"), -- Dark icon
+		volume_widget_icon = color("#d5c4a1"), -- Dark icon
 
 		-- Media Widget
 		media_widget_bg = transparent("#ffffff", 0), -- Transparent background

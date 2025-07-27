@@ -64,7 +64,7 @@ local function create_spaces()
 	clear_spaces()
 	local count = get_space_count()
 	local theme = ThemeManager.get_current_theme()
-	local icon_color = theme.name == "Light" and theme.colors.black or colors.grey
+	local icon_color = theme.colors.space_icon or colors.grey
 	for i = 1, count do
 		local icon_font = is_minimal_theme() and "sketchybar-app-font:Bold:14.0" or settings.font.numbers -- Larger font for minimal themes
 		-- Adjust padding based on theme type
@@ -85,7 +85,7 @@ local function create_spaces()
 				padding_right = label_padding_right,
 				font = "sketchybar-app-font:Regular:12.0",
 				y_offset = -1,
-				color = icon_color,
+				color = theme.colors.space_text or icon_color,
 			},
 			padding_right = 0,
 			padding_left = 0,
@@ -142,9 +142,11 @@ local function create_spaces()
 			local selected = env.SELECTED == "true"
 			if is_minimal_theme() then
 				-- Simple icon color change for minimal theme (no background highlighting)
+				local theme = ThemeManager.get_current_theme()
+				local active_color = theme.colors.space_active_icon or colors.blue
 				space:set({
 					icon = {
-						color = selected and 0xffE5E9F0 or icon_color,
+						color = selected and active_color or icon_color,
 					},
 				})
 				bracket:set({
