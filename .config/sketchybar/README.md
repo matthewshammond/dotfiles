@@ -12,6 +12,7 @@ This theme system is built on top of:
 
 - **Multiple Built-in Themes**: Nord, Dark, Light, Dracula, Tokyo Night, Waves, and more
 - **Theme Cycling**: Click the Apple icon to cycle through themes
+- **Automatic Wallpaper Integration**: Automatically sets desktop wallpapers when switching themes
 - **Complete Widget Customization**: Customize colors for CPU, WiFi, Battery, Volume widgets
 - **Widget Management**: Enable/disable widgets and reorder them easily
 - **Space Customization**: Full control over space colors and appearance
@@ -86,6 +87,76 @@ This theme system is built on top of:
 
 - **Click the Apple icon** (🍎) in the status bar to cycle through themes
 - **Right-click the Apple icon** to access the original menu system
+
+### Wallpaper Integration
+
+The theme system automatically sets desktop wallpapers when you switch between themes. When you switch to a theme, it looks for a wallpaper image file in the `themes/` directory with the same name as the theme file (but with an image extension).
+
+#### Supported Image Formats
+
+- PNG (`.png`)
+- JPEG (`.jpg`, `.jpeg`)
+- GIF (`.gif`)
+- BMP (`.bmp`)
+- TIFF (`.tiff`)
+- WebP (`.webp`)
+
+#### How to Use
+
+1. **Place your wallpaper images in the `themes/` directory**
+   - Use the exact same filename as your theme, but with an image extension
+   - Example: If you have `themes/waves.lua`, place `themes/waves.png` (or any supported format)
+
+2. **File naming examples:**
+   ```
+   themes/
+   ├── waves.lua          # Theme file
+   ├── waves.png          # Wallpaper for waves theme
+   ├── dark.lua           # Theme file
+   ├── dark.jpg           # Wallpaper for dark theme
+   ├── nord.lua           # Theme file
+   └── nord.webp          # Wallpaper for nord theme
+   ```
+
+3. **Switch themes as usual:**
+   - Use your existing theme switching method (keyboard shortcuts, commands, etc.)
+   - The wallpaper will automatically change to match the theme
+
+#### Features
+
+- **Automatic detection**: No configuration needed - just place the image file
+- **All spaces**: Sets the wallpaper for all desktop spaces
+- **Fallback**: If no wallpaper is found, the theme still works normally
+- **Notifications**: Shows whether wallpaper was set successfully or not
+- **Works with both methods**: Command-line theme cycling and SketchyBar dropdown menu
+
+#### Example Usage
+
+```bash
+# Switch to waves theme (will also set waves.png/jpg/etc. as wallpaper)
+lua theme_cycle.lua waves
+
+# Cycle to next theme (will set corresponding wallpaper if available)
+lua theme_cycle.lua next
+```
+
+#### macOS Sonoma Setup Requirements
+
+For wallpapers to work properly on macOS Sonoma, you need to set up the wallpaper system once:
+
+1. **Go to System Settings > Wallpaper**
+2. **Set a wallpaper from a folder you added yourself** (this creates the necessary .plist file)
+3. **Make sure "Show on all Spaces" is enabled**
+
+This setup creates the required `~/Library/Application Support/com.apple.wallpaper/Store/Index.plist` file that the system uses to manage wallpapers across all spaces.
+
+#### Troubleshooting
+
+- **Wallpaper not changing**: Make sure the image file exists and has the correct name
+- **Permission errors**: The script needs accessibility permissions to change wallpapers
+- **Image not found**: Check that the filename matches exactly (case-sensitive)
+- **Wallpaper not showing on all spaces**: You need to enable "Show on all spaces" in System Settings
+- **Plist file not found**: Make sure you've set a wallpaper through System Settings at least once
 
 ### Available Themes
 
