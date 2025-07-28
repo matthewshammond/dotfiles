@@ -3,10 +3,10 @@ return {
 	minimal_spaces = true,
 
 	-- Neovim theme name (uncomment and set to automatically change Neovim theme when switching sketchybar themes)
-	neovim_theme = "nord",
+	neovim_theme = "everforest",
 
 	-- Ghostty theme name (uncomment and set to automatically change Ghostty theme when switching sketchybar themes)
-	ghostty_theme = "nord",
+	ghostty_theme = "everforest-soft",
 
 	-- Ghostty background opacity (uncomment and set to automatically change Ghostty opacity when switching sketchybar themes)
 	ghostty_opacity = 0.75, -- Medium opacity for waves theme
