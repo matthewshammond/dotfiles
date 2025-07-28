@@ -5,6 +5,9 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+# Cache brew prefix to avoid multiple slow calls
+export HOMEBREW_PREFIX=$(brew --prefix 2>/dev/null || echo "/opt/homebrew")
+
 # Load aliases and shortcuts if existent.
 [ -f "$HOME/.dotfiles/aliases.zsh" ] && source "$HOME/.dotfiles/aliases.zsh"
 
@@ -13,45 +16,40 @@ export CLICOLOR=1
 export LSCOLORS=GxFxCxDxBxegedabagaced
 export LS_COLORS="di=1;36:ln=1;35:so=1;32:pi=1;33:ex=1;31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=34;43"
 
-# Enable shims and autocompletion
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
-eval "$(rbenv init -)"
-eval "$(goenv init -)"
+# Lazy load language managers
+pyenv() {
+  unset -f pyenv
+  eval "$(pyenv init -)"
+  eval "$(pyenv virtualenv-init -)"
+  pyenv "$@"
+}
 
-# Add pyenv to $PATH
+rbenv() {
+  unset -f rbenv
+  eval "$(rbenv init -)"
+  rbenv "$@"
+}
+
+goenv() {
+  unset -f goenv
+  eval "$(goenv init -)"
+  goenv "$@"
+}
+
+# Add language manager paths (lazy loaded)
 export PYENV_ROOT="$HOME/.pyenv"
-[[ ":$PATH:" =~ ":$PYENV_ROOT/bin:" ]] || export PATH="$PYENV_ROOT/bin:$PATH"
-
-# Add pipx to $PATH
-export PIPX_ROOT="$HOME/.local"
-[[ ":$PATH:" =~ ":$PIPX_ROOT/bin:" ]] || export PATH="$PIPX_ROOT/bin:$PATH"
-
-# Add rbenv to $PATH
 export RBENV_ROOT="$HOME/.rbenv"
-[[ ":$PATH:" =~ ":$RBENV_ROOT/bin:" ]] || export PATH="$RBENV_ROOT/bin:$PATH"
-
-# Add go to $PATH
 export GOENV_ROOT="$HOME/.goenv"
-[[ ":$PATH:" =~ ":$GOENV_ROOT/bin:" ]] || export PATH="$GOENV_ROOT/bin:$PATH"
-
-# Add rust to $PATH
 export CARGO_ROOT="$HOME/.cargo"
-[[ ":$PATH:" =~ ":$CARGO_ROOT/bin:" ]] || export PATH="$CARGO_ROOT/bin:$PATH"
+export PIPX_ROOT="$HOME/.local"
 
-# Enable Homebrew required path
-[[ ":$PATH:" =~ ":$(brew --prefix)/sbin:" ]] || export PATH="$(brew --prefix)/sbin:$PATH"
+# Add paths efficiently (avoid slow regex checks)
+export PATH="$PYENV_ROOT/bin:$RBENV_ROOT/bin:$GOENV_ROOT/bin:$CARGO_ROOT/bin:$PIPX_ROOT/bin:$HOMEBREW_PREFIX/sbin:$HOMEBREW_PREFIX/opt/fzf/bin:$HOME/.dotfiles/scripts:$PATH"
 
-# Enable fzf required path
-[[ ":$PATH:" =~ ":$(brew --prefix)/opt/fzf/bin:" ]] || export PATH="$(brew --prefix)/opt/fzf/bin:$PATH"
-
-# Enable personal scripts from anywhere
-[[ ":$PATH:" =~ ":$HOME/.dotfiles/scripts:" ]] || export PATH="$HOME/.dotfiles/scripts:$PATH"
-
-# Enable hidden files in FZF
+# Enable fzf settings
 export FZF_DEFAULT_COMMAND='rg --files --hidden -g "!.git"'
 
-# Enable fzf autocompletion
+# Lazy load fzf completion functions
 _fzf_compgen_path() {
   fd --hidden --follow --exclude ".git" . "$1"
 }
@@ -70,16 +68,22 @@ _fzf_comprun() {
   esac
 }
 
-# Enable zsh autocompletion
-[[ ":$FPATH:" =~ ":$(brew --prefix)/share/zsh-completions:" ]] || export FPATH="$(brew --prefix)/share/zsh-completions:$FPATH"
+# Lazy load zsh completion
 autoload -Uz compinit
-compinit -i
+if [[ -n ${ZDOTDIR}/.zcompdump(#qN.mh+24) ]]; then
+  compinit
+  compdump
+else
+  compinit -C
+fi
 
-# Enable 1Password autocompletion
-eval "$(op completion zsh)"; compdef _op op
-
-# Enable ntfy for long tasks
-# eval "$(ntfy shell-integration)"
+# Lazy load 1Password completion
+op() {
+  unset -f op
+  eval "$(op completion zsh)"
+  compdef _op op
+  op "$@"
+}
 
 # Set theme for bat
 export BAT_THEME=Nord
@@ -97,9 +101,14 @@ setopt HIST_IGNORE_SPACE # ignore commands that start with space
 
 # Set GPG for SSH
 export GPG_TTY=$(tty)
-# export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket) # use GPG for SSH
 export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock # use 1Password for SSH
-gpgconf --launch gpg-agent
+
+# Lazy load GPG agent
+gpgconf() {
+  unset -f gpgconf
+  gpgconf --launch gpg-agent
+  gpgconf "$@"
+}
 
 resetcard() {
   rm -r $HOME/.gnupg/private-keys-v1.d
@@ -124,14 +133,46 @@ setopt autocd # Change dir by typing name
 ZVM_VI_INSERT_ESCAPE_BINDKEY=jj
 ZVM_VI_VISUAL_ESCAPE_BINDKEY=jj
 
-# Load plugins; should be last
-source $(brew --prefix)/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-source $(brew --prefix)/opt/zsh-syntax-highlighting/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-source $(brew --prefix)/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh
-source $(brew --prefix)/etc/profile.d/autojump.sh
+# Load completion and key-bindings scripts
 source $HOME/.dotfiles/scripts/completion.zsh
 source $HOME/.dotfiles/scripts/key-bindings.zsh
-source $(brew --prefix)/share/powerlevel10k/powerlevel10k.zsh-theme
+
+# Load Powerlevel10k theme
+source $HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# Load essential plugins immediately (these are fast)
+source $HOMEBREW_PREFIX/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+# Lazy load heavier plugins
+# Load zsh-syntax-highlighting on first use
+function _load_zsh_syntax_highlighting() {
+  source $HOMEBREW_PREFIX/opt/zsh-syntax-highlighting/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+  unset -f _load_zsh_syntax_highlighting
+}
+
+# Load zsh-vi-mode on first use
+function _load_zsh_vi_mode() {
+  source $HOMEBREW_PREFIX/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh
+  unset -f _load_zsh_vi_mode
+}
+
+# Load autojump on first use
+function _load_autojump() {
+  source $HOMEBREW_PREFIX/etc/profile.d/autojump.sh
+  unset -f _load_autojump
+}
+
+# Load plugins after a short delay to avoid blocking startup
+() {
+  # Load syntax highlighting after 1 second
+  sleep 1 && _load_zsh_syntax_highlighting &
+  
+  # Load vi mode after 2 seconds
+  sleep 2 && _load_zsh_vi_mode &
+  
+  # Load autojump after 3 seconds
+  sleep 3 && _load_autojump &
+} &
