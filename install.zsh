@@ -261,6 +261,16 @@ print_step "Running stow..."
 $STOW_PATH .
 print_success "Symlinks created"
 
+# Install zsh-defer for lazy loading
+print_header "Setting up zsh-defer"
+print_step "Installing zsh-defer for clean lazy loading..."
+if [ ! -d ~/.zsh-defer ]; then
+  git clone https://github.com/romkatv/zsh-defer.git ~/.zsh-defer
+  print_success "zsh-defer installed"
+else
+  print_success "zsh-defer already installed"
+fi
+
 # Install SbarLua & Sketchybar Font
 print_header "Setting up Sketchybar"
 print_step "Installing custom font and SbarLua..."

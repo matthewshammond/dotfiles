@@ -98,6 +98,13 @@ The installation process is interactive and allows you to choose:
 - **Icons**: Custom system icons and symbols
 - **Theme Switching**: Dynamic theme switching capabilities through sketchybar configuration
 
+## ⚡ Performance Optimizations
+
+- **Fast zsh Startup**: Optimized `.zshrc` with lazy loading using `zsh-defer`
+- **Clean Loading**: No background processes or job completion messages
+- **Progressive Enhancement**: Essential features load immediately, heavier plugins load after first prompt
+- **Language Manager Optimization**: pyenv, rbenv, and goenv only initialize when used
+
 ### Theme Customization
 
 This setup includes advanced theme switching capabilities through sketchybar. For detailed information about theme switching, customization options, and new features, please refer to the [sketchybar README](.config/sketchybar/README.md).

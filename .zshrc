@@ -5,16 +5,8 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# Cache brew prefix to avoid multiple slow calls
+# Cache brew prefix to avoid multiple slow calls (needed for paths)
 export HOMEBREW_PREFIX=$(brew --prefix 2>/dev/null || echo "/opt/homebrew")
-
-# Load aliases and shortcuts if existent.
-[ -f "$HOME/.dotfiles/aliases.zsh" ] && source "$HOME/.dotfiles/aliases.zsh"
-
-# Enable colors and change prompt:
-export CLICOLOR=1
-export LSCOLORS=GxFxCxDxBxegedabagaced
-export LS_COLORS="di=1;36:ln=1;35:so=1;32:pi=1;33:ex=1;31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=34;43"
 
 # Lazy load language managers
 pyenv() {
@@ -133,9 +125,7 @@ setopt autocd # Change dir by typing name
 ZVM_VI_INSERT_ESCAPE_BINDKEY=jj
 ZVM_VI_VISUAL_ESCAPE_BINDKEY=jj
 
-# Load completion and key-bindings scripts
-source $HOME/.dotfiles/scripts/completion.zsh
-source $HOME/.dotfiles/scripts/key-bindings.zsh
+
 
 # Load Powerlevel10k theme
 source $HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme
@@ -143,36 +133,23 @@ source $HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+# Load zsh-defer for clean lazy loading
+source ~/.zsh-defer/zsh-defer.plugin.zsh
+
 # Load essential plugins immediately (these are fast)
 source $HOMEBREW_PREFIX/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 
-# Lazy load heavier plugins
-# Load zsh-syntax-highlighting on first use
-function _load_zsh_syntax_highlighting() {
-  source $HOMEBREW_PREFIX/opt/zsh-syntax-highlighting/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-  unset -f _load_zsh_syntax_highlighting
-}
+# Defer loading of heavier plugins and configurations
+zsh-defer source $HOMEBREW_PREFIX/opt/zsh-syntax-highlighting/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+zsh-defer source $HOMEBREW_PREFIX/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh
+zsh-defer source $HOMEBREW_PREFIX/etc/profile.d/autojump.sh
 
-# Load zsh-vi-mode on first use
-function _load_zsh_vi_mode() {
-  source $HOMEBREW_PREFIX/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh
-  unset -f _load_zsh_vi_mode
-}
+# Defer loading of completion and key-bindings scripts
+zsh-defer source $HOME/.dotfiles/scripts/completion.zsh
+zsh-defer source $HOME/.dotfiles/scripts/key-bindings.zsh
 
-# Load autojump on first use
-function _load_autojump() {
-  source $HOMEBREW_PREFIX/etc/profile.d/autojump.sh
-  unset -f _load_autojump
-}
+# Defer loading of aliases (they're fast but can be deferred)
+zsh-defer source "$HOME/.dotfiles/aliases.zsh"
 
-# Load plugins after a short delay to avoid blocking startup
-() {
-  # Load syntax highlighting after 1 second
-  sleep 1 && _load_zsh_syntax_highlighting &
-  
-  # Load vi mode after 2 seconds
-  sleep 2 && _load_zsh_vi_mode &
-  
-  # Load autojump after 3 seconds
-  sleep 3 && _load_autojump &
-} &
+# Defer loading of color configurations
+zsh-defer -c 'export CLICOLOR=1; export LSCOLORS=GxFxCxDxBxegedabagaced; export LS_COLORS="di=1;36:ln=1;35:so=1;32:pi=1;33:ex=1;31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=34;43"'
