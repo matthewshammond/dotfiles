@@ -144,34 +144,90 @@ apple:subscribe("mouse.clicked", function()
 				
 				local plist_path = os.getenv("HOME") .. "/Library/Application Support/com.apple.wallpaper/Store/Index.plist"
 				
-				-- Update the existing plist structure using PlistBuddy
-				-- Update SystemDefault
-				local command = string.format('/usr/libexec/PlistBuddy -c "set SystemDefault:Desktop:Content:Choices:0:Files:0:relative file://%s" "%s"', absolute_path, plist_path)
-				local result = os.execute(command)
-				
-				-- Update Displays
-				command = string.format('/usr/libexec/PlistBuddy -c "set Displays:37D8832A-2D66-02CA-B9F7-8F30A301B230:Desktop:Content:Choices:0:Files:0:relative file://%s" "%s"', absolute_path, plist_path)
-				result = os.execute(command) or result
-				
-				-- Update known space IDs
-				local known_space_ids = {
-					"7C01335A-6F11-438B-A860-B77627C0A098",
-					"54733FBD-7461-40A5-93EA-438A010028B8", 
-					"877F7393-DFDD-4C7B-AA73-E16E80BDC4C7",
-					"9DD66961-2812-4505-8854-1B209C7F1B8A",
-					"CF83B9F3-30DD-4311-BC58-45D159A7792F",
-					"158B1F3B-B95F-48D1-83B8-EBDE139B4B2D"
-				}
-				
-				for _, space_id in ipairs(known_space_ids) do
-					command = string.format('/usr/libexec/PlistBuddy -c "set Spaces:%s:Default:Desktop:Content:Choices:0:Files:0:relative file://%s" "%s"', space_id, absolute_path, plist_path)
-					os.execute(command .. " 2>/dev/null")
-					
-					command = string.format('/usr/libexec/PlistBuddy -c "set Spaces:%s:Displays:37D8832A-2D66-02CA-B9F7-8F30A301B230:Desktop:Content:Choices:0:Files:0:relative file://%s" "%s"', space_id, absolute_path, plist_path)
-					os.execute(command .. " 2>/dev/null")
+				-- Function to safely update a plist path
+				local function update_plist_path(path, value)
+					local command = string.format('/usr/libexec/PlistBuddy -c "set %s file://%s" "%s" 2>/dev/null', path, value, plist_path)
+					local result = os.execute(command)
+					return result == 0 or result == true
 				end
 				
-				if result == 0 or result == true then
+				-- Function to check if a plist path exists
+				local function plist_path_exists(path)
+					local command = string.format('/usr/libexec/PlistBuddy -c "Print %s" "%s" 2>/dev/null', path, plist_path)
+					local result = os.execute(command)
+					return result == 0 or result == true
+				end
+				
+				-- Function to get all keys in a dictionary
+				local function get_dict_keys(dict_path)
+					local command = string.format('/usr/libexec/PlistBuddy -c "Print %s" "%s" 2>/dev/null', dict_path, plist_path)
+					local handle = io.popen(command)
+					if not handle then return {} end
+					
+					local content = handle:read("*all")
+					handle:close()
+					
+					local keys = {}
+					for key in content:gmatch('([%w%-]+) = Dict') do
+						table.insert(keys, key)
+					end
+					return keys
+				end
+				
+				local success = false
+				
+				-- Try to update SystemDefault if it exists
+				if plist_path_exists("SystemDefault:Desktop:Content:Choices:0:Files:0:relative") then
+					success = update_plist_path("SystemDefault:Desktop:Content:Choices:0:Files:0:relative", absolute_path) or success
+				end
+				
+				-- Try to update AllSpacesAndDisplays if it exists
+				if plist_path_exists("AllSpacesAndDisplays:Desktop:Content:Choices:0:Files:0:relative") then
+					success = update_plist_path("AllSpacesAndDisplays:Desktop:Content:Choices:0:Files:0:relative", absolute_path) or success
+				end
+				
+				-- Try to update Displays section if it exists
+				if plist_path_exists("Displays") then
+					local display_keys = get_dict_keys("Displays")
+					for _, display_id in ipairs(display_keys) do
+						local display_path = string.format("Displays:%s:Desktop:Content:Choices:0:Files:0:relative", display_id)
+						if plist_path_exists(display_path) then
+							update_plist_path(display_path, absolute_path)
+						end
+					end
+				end
+				
+				-- Try to update Spaces section if it exists
+				if plist_path_exists("Spaces") then
+					local space_keys = get_dict_keys("Spaces")
+					for _, space_id in ipairs(space_keys) do
+						-- Try different possible paths for each space
+						local space_paths = {
+							string.format("Spaces:%s:Desktop:Content:Choices:0:Files:0:relative", space_id),
+							string.format("Spaces:%s:Default:Desktop:Content:Choices:0:Files:0:relative", space_id)
+						}
+						
+						for _, space_path in ipairs(space_paths) do
+							if plist_path_exists(space_path) then
+								update_plist_path(space_path, absolute_path)
+							end
+						end
+						
+						-- Also try to update any displays within this space
+						local space_displays_path = string.format("Spaces:%s:Displays", space_id)
+						if plist_path_exists(space_displays_path) then
+							local display_keys = get_dict_keys(space_displays_path)
+							for _, display_id in ipairs(display_keys) do
+								local display_path = string.format("Spaces:%s:Displays:%s:Desktop:Content:Choices:0:Files:0:relative", space_id, display_id)
+								if plist_path_exists(display_path) then
+									update_plist_path(display_path, absolute_path)
+								end
+							end
+						end
+					end
+				end
+				
+				if success then
 					os.execute("killall WallpaperAgent 2>/dev/null")
 				end
 			end
