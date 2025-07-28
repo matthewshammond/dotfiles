@@ -1,0 +1,269 @@
+# Starship configuration file
+# Get more info here: https://starship.rs/config/
+
+# Inserts a blank line between shell prompts
+add_newline = true
+
+# Replace the '❯' symbol in the prompt with '➜'
+[character]
+success_symbol = '[➜](bold green)'
+error_symbol = '[✗](bold red)'
+
+# Disable the package module, hiding it from the prompt completely
+[package]
+disabled = true
+
+# Customize the git status module
+[git_status]
+conflicted = "⚡"
+ahead = "⇡\${count}"
+behind = "⇣\${count}"
+diverged = "⇕⇡\${ahead_count}⇣\${behind_count}"
+untracked = "?"
+stashed = "≡"
+modified = "!"
+staged = "+"
+renamed = "»"
+deleted = "✘"
+
+# Customize the git_branch module
+[git_branch]
+symbol = " "
+truncation_length = 4
+truncation_symbol = ""
+style = "bold purple"
+
+# Customize the directory module
+[directory]
+truncation_length = 3
+truncation_symbol = "…/"
+style = "bold blue"
+
+# Customize the command module
+[cmd_duration]
+min_time = 2_000
+style = "bold yellow"
+
+# Customize the line_break module
+[line_break]
+disabled = false
+
+# Customize the hostname module
+[hostname]
+ssh_only = true
+format = "on [$hostname](bold red) "
+disabled = false
+
+# Customize the username module
+[username]
+style_user = "bold blue"
+style_root = "bold red"
+format = "[$user]($style) "
+disabled = false
+show_always = false
+
+# Customize the time module
+[time]
+disabled = false
+format = '🕙[\[ $time \]]($style) '
+time_format = "%T"
+utc_time_offset = "-5"
+time_range = "-"
+
+# Customize the nodejs module
+[nodejs]
+format = 'via [⬢ $version](bold green) '
+
+# Customize the python module
+[python]
+format = 'via [🐍 $version](bold green) '
+
+# Customize the rust module
+[rust]
+format = 'via [⚙️ $version](bold red) '
+
+# Customize the golang module
+[golang]
+format = 'via [🐹 $version](bold cyan) '
+
+# Customize the ruby module
+[ruby]
+format = 'via [💎 $version](bold red) '
+
+# Customize the docker_context module
+[docker_context]
+format = 'via [🐳 $context](blue) '
+
+# Customize the kubernetes module
+[kubernetes]
+format = 'on [⛵ ($cluster on )($namespace \\($context\\) in )$context](blue) '
+disabled = true
+
+# Customize the aws module
+[aws]
+format = 'on [☁️ $profile(\\($region\\))]($style) '
+style = "bold yellow"
+disabled = true
+
+# Customize the gcloud module
+[gcloud]
+format = 'on [☁️ $project(\\($region\\))]($style) '
+style = "bold blue"
+disabled = true
+
+# Customize the terraform module
+[terraform]
+format = 'on [💠 $workspace]($style) '
+style = "bold blue"
+disabled = true
+
+# Customize the battery module
+[battery]
+full_symbol = "🔋"
+charging_symbol = "⚡"
+discharging_symbol = "💀"
+unknown_symbol = "❓"
+empty_symbol = "🪫"
+format = '[$symbol$percentage]($style) '
+disabled = false
+
+# Customize the memory_usage module
+[memory_usage]
+symbol = " "
+disabled = false
+threshold = 75
+format = "via $symbol [${ram_pct}]($style) "
+style = "bold dimmed white"
+
+# Customize the disk_usage module
+[disk_usage]
+symbol = " "
+disabled = false
+threshold = 75
+format = "via $symbol [${disk_pct}]($style) "
+style = "bold dimmed white"
+
+# Customize the jobs module
+[jobs]
+symbol = " "
+format = '[$symbol$number]($style) '
+style = "bold blue"
+disabled = false
+
+# Customize the status module
+[status]
+symbol = " "
+format = '[$symbol$common_meaning$signal_name$maybe_int]($style) '
+style = "bold red"
+disabled = false
+
+# Customize the cmd module
+[cmd]
+symbol = " "
+style = "bold blue"
+disabled = false
+
+# Customize the conda module
+[conda]
+format = 'via [🐍 $environment](dimmed green) '
+disabled = true
+
+# Customize the crystal module
+[crystal]
+format = 'via [✨ $version](bold red) '
+disabled = true
+
+# Customize the dart module
+[dart]
+format = 'via [🎯 $version](bold red) '
+disabled = true
+
+# Customize the deno module
+[deno]
+format = 'via [🦕 $version](bold green) '
+disabled = true
+
+# Customize the elixir module
+[elixir]
+format = 'via [💧 $version](bold purple) '
+disabled = true
+
+# Customize the elm module
+[elm]
+format = 'via [🌳 $version](bold green) '
+disabled = true
+
+# Customize the erlang module
+[erlang]
+format = 'via [e $version](bold red) '
+disabled = true
+
+# Customize the haskell module
+[haskell]
+format = 'via [λ $version](bold purple) '
+disabled = true
+
+# Customize the java module
+[java]
+format = 'via [☕ $version](bold red) '
+disabled = true
+
+# Customize the julia module
+[julia]
+format = 'via [ஃ $version](bold purple) '
+disabled = true
+
+# Customize the kotlin module
+[kotlin]
+format = 'via [🅺 $version](bold blue) '
+disabled = true
+
+# Customize the lua module
+[lua]
+format = 'via [🌙 $version](bold blue) '
+disabled = true
+
+# Customize the nim module
+[nim]
+format = 'via [👑 $version](bold yellow) '
+disabled = true
+
+# Customize the ocaml module
+[ocaml]
+format = 'via [🐫 $version](bold yellow) '
+disabled = true
+
+# Customize the perl module
+[perl]
+format = 'via [🐪 $version](bold blue) '
+disabled = true
+
+# Customize the php module
+[php]
+format = 'via [🐘 $version](bold magenta) '
+disabled = true
+
+# Customize the purescript module
+[purescript]
+format = 'via [<=> $version](bold white) '
+disabled = true
+
+# Customize the scala module
+[scala]
+format = 'via [🆂 $version](bold red) '
+disabled = true
+
+# Customize the swift module
+[swift]
+format = 'via [🐦 $version](bold orange) '
+disabled = true
+
+# Customize the vagrant module
+[vagrant]
+format = 'via [ⓥ $version](bold blue) '
+disabled = true
+
+# Customize the zig module
+[zig]
+format = 'via [⚡ $version](bold yellow) '
+disabled = true

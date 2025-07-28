@@ -314,7 +314,7 @@ brew install zsh-autosuggestions    # Auto-suggestions
 brew install zsh-completions        # Completions
 brew install zsh-syntax-highlighting  # Syntax highlighting
 brew install zsh-vi-mode           # Vi mode
-brew install powerlevel10k         # Theme
+brew install starship              # Theme
 print_success "Zsh and plugins installed"
 
 ###############################################################################
@@ -377,6 +377,7 @@ brew install --cask ubersicht        # Custom desktop widgets
 # Fonts
 brew install --cask font-hack-nerd-font    # Hack Nerd Font
 brew install --cask font-jetbrains-mono-nerd-font # JetBrains Mono
+brew install --cask font-sketchybar-app-font     # Sketchybar App Font
 
 print_success "GUI applications installed"
 

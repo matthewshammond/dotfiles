@@ -73,6 +73,7 @@ return {
 	["Keynote"] = ":keynote:",
 	["Keynote 讲演"] = ":keynote:",
 	["iTerm2"] = ":iterm:",
+	["Ghostty"] = ":terminal:",
 	["IntelliJ IDEA"] = ":idea:",
 	["Finder"] = ":finder:",
 	["访达"] = ":finder:",

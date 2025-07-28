@@ -219,6 +219,7 @@ print_step "Installing LazyVim..."
 rm -rf ~/.config/nvim
 git clone https://github.com/LazyVim/starter ~/.config/nvim
 rm -rf ~/.config/nvim/.git
+rm -rf ~/.config/nvim/init.lua
 rm -rf ~/.config/nvim/lua
 print_success "LazyVim installed"
 
@@ -235,14 +236,15 @@ print_step "Cleaning up existing files first..."
 files_to_clean=(
     "$HOME/.config/asciinema"
     "$HOME/.config/gh"
+    "$HOME/.config/ghostty"
     "$HOME/.config/karabiner"
     "$HOME/.config/sketchybar"
     "$HOME/.config/skhd"
+    "$HOME/.config/starship.toml"
     "$HOME/.config/yabai"
     "$HOME/.gitconfig"
     "$HOME/.gnupg"
     "$HOME/.ntfy.yml"
-    "$HOME/.p10k.zsh"
     "$HOME/.ssh"
     "$HOME/.tmux.conf"
     "$HOME/.zshrc"
@@ -262,17 +264,9 @@ print_success "Symlinks created"
 # Install SbarLua & Sketchybar Font
 print_header "Setting up Sketchybar"
 print_step "Installing custom font and SbarLua..."
-curl -L https://github.com/kvndrsslr/sketchybar-app-font/releases/download/v2.0.5/sketchybar-app-font.ttf -o $HOME/Library/Fonts/sketchybar-app-font.ttf
 (git clone https://github.com/FelixKratz/SbarLua.git /tmp/SbarLua && cd /tmp/SbarLua/ && make install && rm -rf /tmp/SbarLua/)
 /opt/homebrew/bin/brew services restart sketchybar
 print_success "Sketchybar setup complete"
-
-# Setup shell theme
-print_header "Setting up Shell Theme"
-print_step "Configuring Powerlevel10k..."
-print_success "Powerlevel10k configured"
-
-print_info "Note: You'll need to open a new terminal for all shell configurations to take effect"
 
 # Configure Touch ID for sudo
 print_header "Configuring Security"
@@ -462,7 +456,7 @@ Discord=$(dock_item "file:///Applications/Discord.app/")
 Signal=$(dock_item "file:///Applications/Signal.app/")
 Safari=$(dock_item "file:///System/Cryptexes/App/System/Applications/Safari.app/")
 Notes=$(dock_item "file:///System/Applications/Notes.app/")
-iTerm=$(dock_item "file:///Applications/iTerm.app/")
+Ghostty=$(dock_item "file:///Applications/Ghostty.app/")
 
 # Add folders to Dock with proper attributes
 print_step "Adding folders to Dock..."
@@ -475,7 +469,7 @@ Documents=$(dock_folder "file:///Users/matthammond/Documents/" "Documents")
 Downloads=$(dock_folder "file:///Users/matthammond/Downloads/" "Downloads")
 
 # Set Dock items
-defaults write com.apple.dock persistent-apps -array "$Mail" "$Outlook" "$Spark" "$Calendars" "$Calendar" "$Messages" "$Discord" "$Signal" "$Safari" "$Notes" "$iTerm"
+defaults write com.apple.dock persistent-apps -array "$Mail" "$Outlook" "$Spark" "$Calendars" "$Calendar" "$Messages" "$Discord" "$Signal" "$Safari" "$Notes" "$Ghostty"
 defaults write com.apple.dock persistent-others -array "$Applications" "$Documents" "$Downloads"
 
 print_success "Dock configured"
@@ -510,7 +504,6 @@ echo "  ${ARROW} Set up 7 Spaces/Desktops (Control + Up Arrow to add new spaces)
 
 print_step "Applications:"
 echo "  ${ARROW} Sign in to 1Password"
-echo "  ${ARROW} Configure iTerm2 to use custom profile"
 echo "  ${ARROW} Set up GPG keys"
 echo "  ${ARROW} Configure Git with GPG signing"
 echo "  ${ARROW} Set up SSH keys"
