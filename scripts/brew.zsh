@@ -314,7 +314,7 @@ brew install zsh-autosuggestions    # Auto-suggestions
 brew install zsh-completions        # Completions
 brew install zsh-syntax-highlighting  # Syntax highlighting
 brew install zsh-vi-mode           # Vi mode
-brew install starship              # Theme
+brew install powerlevel10k         # Theme
 print_success "Zsh and plugins installed"
 
 ###############################################################################

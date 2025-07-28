@@ -92,7 +92,7 @@ The installation process is interactive and allows you to choose:
 
 ## 🎨 Theme & Appearance
 
-- **Terminal**: Ghostty with Starship prompt
+- **Terminal**: Ghostty with PowerLevel10k prompt
 - **Color Scheme**: Custom-crafted theme with dynamic switching via sketchybar
 - **Font**: JetBrains Mono & Hack Nerd Font
 - **Icons**: Custom system icons and symbols
@@ -107,7 +107,7 @@ This setup includes advanced theme switching capabilities through sketchybar. Fo
 - `.zshrc`: Shell configuration and aliases
 - `.gitconfig`: Git preferences and aliases
 - `.config/nvim`: Neovim configuration (LazyVim)
-- `.config/starship.toml`: Starship prompt configuration
+- `.p10k.zsh`: PowerLevel10k prompt configuration
 - `.config/ghostty`: Ghostty terminal configuration
 - `Brewfile`: Package declarations
 - `scripts/`: Installation and setup scripts
@@ -135,7 +135,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [Homebrew](https://brew.sh/) - The missing package manager for macOS
 - [LazyVim](https://github.com/LazyVim/LazyVim) - Neovim configuration
-- [Starship](https://starship.rs/) - Cross-shell prompt
+- [PowerLevel10k](https://github.com/romkatv/powerlevel10k) - Cross-shell prompt
 - [Ghostty](https://github.com/mitchellh/ghostty) - Modern terminal emulator
 - And all the amazing open-source projects that make this possible!
 
