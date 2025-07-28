@@ -91,31 +91,36 @@ setopt HIST_EXPIRE_DUPS_FIRST # delete duplicates first when HISTFILE size excee
 setopt HIST_IGNORE_DUPS # ignore history duplicated commands history list
 setopt HIST_IGNORE_SPACE # ignore commands that start with space
 
-# Set GPG for SSH
-export GPG_TTY=$(tty)
-export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock # use 1Password for SSH
-
-# Lazy load GPG agent
+# Lazy load GPG configuration and functions
 gpgconf() {
-  unset -f gpgconf
+  unset -f gpgconf resetcard
+  export GPG_TTY=$(tty)
+  export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
   gpgconf --launch gpg-agent
   gpgconf "$@"
 }
 
 resetcard() {
+  unset -f gpgconf resetcard
+  export GPG_TTY=$(tty)
+  export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
   rm -r $HOME/.gnupg/private-keys-v1.d
   gpgconf --kill gpg-agent
   gpg --card-status
 }
 
-# Convert vim to nvim
+# Lazy load sudo with vim conversion
 sudo() {
-    if [[ "$1" = "vim" ]]; then
-        shift
-        command sudo nvim "$@"
-    else
-        command sudo "$@"
-    fi
+    unset -f sudo
+    sudo() {
+        if [[ "$1" = "vim" ]]; then
+            shift
+            command sudo nvim "$@"
+        else
+            command sudo "$@"
+        fi
+    }
+    sudo "$@"
 }
 
 # General Settings

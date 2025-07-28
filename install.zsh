@@ -143,15 +143,15 @@ if [[ "$(git config --get remote.origin.url)" == *"git@github.com"* ]]; then
     print_step "Initializing private repository..."
     git submodule init
     git submodule update
-    
+
     # Check if there are actual files in the private directory
     if [ -n "$(ls -A ${dotfiledir}/private)" ]; then
         print_step "Processing private files..."
-        
+
         # Handle .config directories from private repo
         if [ -d "${dotfiledir}/private/.config" ]; then
             print_step "Processing private .config directories..."
-            
+
             # Copy specific .config directories (asciinema and gh)
             for dir in "asciinema" "gh"; do
                 if [ -d "${dotfiledir}/private/.config/$dir" ]; then
@@ -161,7 +161,7 @@ if [[ "$(git config --get remote.origin.url)" == *"git@github.com"* ]]; then
                 fi
             done
         fi
-        
+
         # Then handle all other private files
         print_step "Processing other private files..."
         for file in "${dotfiledir}/private"/*; do
@@ -173,7 +173,7 @@ if [[ "$(git config --get remote.origin.url)" == *"git@github.com"* ]]; then
                 fi
             fi
         done
-        
+
         print_success "Private files initialized"
     else
         print_info "No files found in private directory"

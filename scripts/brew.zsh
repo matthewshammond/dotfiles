@@ -142,12 +142,6 @@ if [ "$install_python" = "y" ]; then
     print_success "Python environment configured"
 else
     print_info "Skipping Python installation"
-    sed -i '' '17s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '18s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '23s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '24s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '27s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '28s/^/#/' ${dotfiledir}/.zshrc
 fi
 
 if [ "$install_go" = "y" ]; then
@@ -171,9 +165,6 @@ if [ "$install_go" = "y" ]; then
     print_success "Go environment configured"
 else
     print_info "Skipping Go installation"
-    sed -i '' '20s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '35s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '36s/^/#/' ${dotfiledir}/.zshrc
 fi
 
 if [ "$install_ruby" = "y" ]; then
@@ -212,9 +203,6 @@ if [ "$install_ruby" = "y" ]; then
     print_success "Ruby environment configured"
 else
     print_info "Skipping Ruby installation"
-    sed -i '' '19s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '31s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '32s/^/#/' ${dotfiledir}/.zshrc
 fi
 
 if [ "$install_rust" = "y" ]; then
@@ -237,8 +225,6 @@ if [ "$install_rust" = "y" ]; then
     print_success "Rust environment configured"
 else
     print_info "Skipping Rust installation"
-    sed -i '' '39s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '40s/^/#/' ${dotfiledir}/.zshrc
 fi
 
 ###############################################################################
@@ -468,19 +454,6 @@ fi
 ###############################################################################
 
 print_header "Final Configuration"
-
-# Check if private repository has content (not just the directory)
-if [ -z "$(ls -A ${dotfiledir}/private 2>/dev/null)" ]; then
-    print_info "Private repository is empty, commenting out GPG-related lines..."
-    sed -i '' '99s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '101s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '102s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '104s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '105s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '106s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '107s/^/#/' ${dotfiledir}/.zshrc
-    sed -i '' '108s/^/#/' ${dotfiledir}/.zshrc
-fi
 
 print_success "Installation complete! 🎉"
 
