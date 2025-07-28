@@ -120,10 +120,10 @@ apple:subscribe("mouse.clicked", function()
 			-- Try to set wallpaper for the theme
 			local theme_name = ThemeManager.get_current_theme_name()
 			local themes_dir = os.getenv("CONFIG_DIR") and (os.getenv("CONFIG_DIR") .. "/themes") or "themes"
-			
-			local image_extensions = {"png", "jpg", "jpeg", "gif", "bmp", "tiff", "webp"}
+
+			local image_extensions = { "png", "jpg", "jpeg", "gif", "bmp", "tiff", "webp" }
 			local wallpaper_path = nil
-			
+
 			-- Find wallpaper for the theme
 			for _, ext in ipairs(image_extensions) do
 				local test_path = themes_dir .. "/" .. theme_name .. "." .. ext
@@ -134,69 +134,86 @@ apple:subscribe("mouse.clicked", function()
 					break
 				end
 			end
-			
+
 			-- Set wallpaper if found
 			if wallpaper_path then
 				local absolute_path = wallpaper_path
 				if wallpaper_path:sub(1, 1) == "." then
 					absolute_path = os.getenv("PWD") .. wallpaper_path:sub(2)
 				end
-				
-				local plist_path = os.getenv("HOME") .. "/Library/Application Support/com.apple.wallpaper/Store/Index.plist"
-				
+
+				local plist_path = os.getenv("HOME")
+					.. "/Library/Application Support/com.apple.wallpaper/Store/Index.plist"
+
 				-- Function to safely update a plist path
 				local function update_plist_path(path, value)
-					local command = string.format('/usr/libexec/PlistBuddy -c "set %s file://%s" "%s" 2>/dev/null', path, value, plist_path)
+					local command = string.format(
+						'/usr/libexec/PlistBuddy -c "set %s file://%s" "%s" 2>/dev/null',
+						path,
+						value,
+						plist_path
+					)
 					local result = os.execute(command)
 					return result == 0 or result == true
 				end
-				
+
 				-- Function to check if a plist path exists
 				local function plist_path_exists(path)
-					local command = string.format('/usr/libexec/PlistBuddy -c "Print %s" "%s" 2>/dev/null', path, plist_path)
+					local command =
+						string.format('/usr/libexec/PlistBuddy -c "Print %s" "%s" 2>/dev/null', path, plist_path)
 					local result = os.execute(command)
 					return result == 0 or result == true
 				end
-				
+
 				-- Function to get all keys in a dictionary
 				local function get_dict_keys(dict_path)
-					local command = string.format('/usr/libexec/PlistBuddy -c "Print %s" "%s" 2>/dev/null', dict_path, plist_path)
+					local command =
+						string.format('/usr/libexec/PlistBuddy -c "Print %s" "%s" 2>/dev/null', dict_path, plist_path)
 					local handle = io.popen(command)
-					if not handle then return {} end
-					
+					if not handle then
+						return {}
+					end
+
 					local content = handle:read("*all")
 					handle:close()
-					
+
 					local keys = {}
-					for key in content:gmatch('([%w%-]+) = Dict') do
+					for key in content:gmatch("([%w%-]+) = Dict") do
 						table.insert(keys, key)
 					end
 					return keys
 				end
-				
+
 				local success = false
-				
+
 				-- Try to update SystemDefault if it exists
 				if plist_path_exists("SystemDefault:Desktop:Content:Choices:0:Files:0:relative") then
-					success = update_plist_path("SystemDefault:Desktop:Content:Choices:0:Files:0:relative", absolute_path) or success
+					success = update_plist_path(
+						"SystemDefault:Desktop:Content:Choices:0:Files:0:relative",
+						absolute_path
+					) or success
 				end
-				
+
 				-- Try to update AllSpacesAndDisplays if it exists
 				if plist_path_exists("AllSpacesAndDisplays:Desktop:Content:Choices:0:Files:0:relative") then
-					success = update_plist_path("AllSpacesAndDisplays:Desktop:Content:Choices:0:Files:0:relative", absolute_path) or success
+					success = update_plist_path(
+						"AllSpacesAndDisplays:Desktop:Content:Choices:0:Files:0:relative",
+						absolute_path
+					) or success
 				end
-				
+
 				-- Try to update Displays section if it exists
 				if plist_path_exists("Displays") then
 					local display_keys = get_dict_keys("Displays")
 					for _, display_id in ipairs(display_keys) do
-						local display_path = string.format("Displays:%s:Desktop:Content:Choices:0:Files:0:relative", display_id)
+						local display_path =
+							string.format("Displays:%s:Desktop:Content:Choices:0:Files:0:relative", display_id)
 						if plist_path_exists(display_path) then
 							update_plist_path(display_path, absolute_path)
 						end
 					end
 				end
-				
+
 				-- Try to update Spaces section if it exists
 				if plist_path_exists("Spaces") then
 					local space_keys = get_dict_keys("Spaces")
@@ -204,21 +221,25 @@ apple:subscribe("mouse.clicked", function()
 						-- Try different possible paths for each space
 						local space_paths = {
 							string.format("Spaces:%s:Desktop:Content:Choices:0:Files:0:relative", space_id),
-							string.format("Spaces:%s:Default:Desktop:Content:Choices:0:Files:0:relative", space_id)
+							string.format("Spaces:%s:Default:Desktop:Content:Choices:0:Files:0:relative", space_id),
 						}
-						
+
 						for _, space_path in ipairs(space_paths) do
 							if plist_path_exists(space_path) then
 								update_plist_path(space_path, absolute_path)
 							end
 						end
-						
+
 						-- Also try to update any displays within this space
 						local space_displays_path = string.format("Spaces:%s:Displays", space_id)
 						if plist_path_exists(space_displays_path) then
 							local display_keys = get_dict_keys(space_displays_path)
 							for _, display_id in ipairs(display_keys) do
-								local display_path = string.format("Spaces:%s:Displays:%s:Desktop:Content:Choices:0:Files:0:relative", space_id, display_id)
+								local display_path = string.format(
+									"Spaces:%s:Displays:%s:Desktop:Content:Choices:0:Files:0:relative",
+									space_id,
+									display_id
+								)
 								if plist_path_exists(display_path) then
 									update_plist_path(display_path, absolute_path)
 								end
@@ -226,12 +247,12 @@ apple:subscribe("mouse.clicked", function()
 						end
 					end
 				end
-				
+
 				if success then
 					os.execute("killall WallpaperAgent 2>/dev/null")
 				end
 			end
-			
+
 			-- Update Neovim theme if specified in the current theme
 			if new_theme.neovim_theme then
 				local nvim_theme_file = os.getenv("HOME") .. "/.config/nvim/lua/config/theme.lua"
@@ -244,7 +265,7 @@ apple:subscribe("mouse.clicked", function()
 					print("Warning: Could not update Neovim theme file: " .. nvim_theme_file)
 				end
 			end
-			
+
 			-- Update Ghostty theme and opacity if specified in the current theme
 			if new_theme.ghostty_theme or new_theme.ghostty_opacity then
 				local ghostty_config_file = os.getenv("HOME") .. "/.config/ghostty/config"
@@ -253,25 +274,28 @@ apple:subscribe("mouse.clicked", function()
 					local content = file:read("*all")
 					file:close()
 					local new_content = content
-					
+
 					-- Replace the theme line if specified
 					if new_theme.ghostty_theme then
 						new_content = new_content:gsub("theme = [^\n]+", "theme = " .. new_theme.ghostty_theme)
 						print("Updated Ghostty theme to: " .. new_theme.ghostty_theme)
 					end
-					
+
 					-- Replace the background-opacity line if specified
 					if new_theme.ghostty_opacity then
-						new_content = new_content:gsub("background%-opacity = [^\n]+", "background-opacity = " .. new_theme.ghostty_opacity)
+						new_content = new_content:gsub(
+							"background%-opacity = [^\n]+",
+							"background-opacity = " .. new_theme.ghostty_opacity
+						)
 						print("Updated Ghostty opacity to: " .. new_theme.ghostty_opacity)
 					end
-					
+
 					-- Write the updated content back
 					local write_file = io.open(ghostty_config_file, "w")
 					if write_file then
 						write_file:write(new_content)
 						write_file:close()
-						
+
 						-- Trigger Ghostty config reload via AppleScript
 						local applescript = [[
 							tell application "System Events"
@@ -289,9 +313,6 @@ apple:subscribe("mouse.clicked", function()
 					print("Warning: Could not read Ghostty config file: " .. ghostty_config_file)
 				end
 			end
-			
-			-- Show theme change notification
-			sbar.exec(string.format('osascript -e \'display notification "%s" with title "SketchyBar Theme"\'', new_theme.name))
 
 			-- Trigger the theme_changed event
 			sbar.exec("sketchybar --trigger theme_changed")
