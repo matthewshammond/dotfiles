@@ -525,6 +525,16 @@ echo "  ${ARROW} Move ~/.dotfiles/.config/Übersicht/widgets/flip-clock.widget t
 echo "  ${ARROW} Install Private Internet Access (brew install --cask private-internet-access)"
 echo "  ${ARROW} Install Parallels (brew install --cask parallels)"
 
+print_step "sketchybar Theme System:"
+echo "  ${ARROW} Go to System Settings > Wallpaper"
+echo "  ${ARROW} Change wallpaper to ANY image (not default macOS wallpaper)"
+echo "  ${ARROW} Enable 'Show on all Spaces'"
+echo "  ${ARROW} Apply changes"
+echo "  ${WARN} This is REQUIRED for sketchybar theme switching to work with wallpapers"
+echo "  ${ARROW} Open Neovim (nvim) and wait for LazyVim to install plugins"
+echo "  ${ARROW} Quit Neovim (:q) after plugin installation completes"
+echo "  ${WARN} This is REQUIRED for Neovim theme switching to work with sketchybar"
+
 print_step "Development Environment:"
 echo "  ${ARROW} Set up Python virtual environments"
 echo "  ${ARROW} Configure Node.js environment"

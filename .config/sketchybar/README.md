@@ -142,21 +142,40 @@ lua theme_cycle.lua next
 
 #### macOS Sonoma Setup Requirements
 
-For wallpapers to work properly on macOS Sonoma, you need to set up the wallpaper system once:
+**CRITICAL**: For wallpapers to work properly on macOS Sonoma, you must manually set up the wallpaper system first:
 
 1. **Go to System Settings > Wallpaper**
-2. **Set a wallpaper from a folder you added yourself** (this creates the necessary .plist file)
+2. **Change the wallpaper to ANY image** (not the default macOS wallpaper)
 3. **Make sure "Show on all Spaces" is enabled**
+4. **Apply the changes**
+
+This step is crucial because macOS needs to initialize its wallpaper management system before sketchybar can programmatically change wallpapers. Without this setup, theme switching will work but wallpapers won't change.
+
+> **Important**: Simply enabling/disabling "Show on all Spaces" on the default wallpaper is not sufficient. You must actually change the wallpaper to a different image first.
 
 This setup creates the required `~/Library/Application Support/com.apple.wallpaper/Store/Index.plist` file that the system uses to manage wallpapers across all spaces.
 
+#### Neovim Theme Integration
+
+If you're using Neovim themes with sketchybar, you must initialize Neovim first:
+
+1. **Open Neovim** (`nvim` in terminal or launch the app)
+2. **Wait for LazyVim to install all plugins** (this may take a few minutes)
+3. **Quit Neovim** (`:q` or `Cmd+Q`)
+
+This step is required because LazyVim needs to install and configure all plugins before the theme system can properly switch Neovim themes when you change sketchybar themes.
+
 #### Troubleshooting
 
-- **Wallpaper not changing**: Make sure the image file exists and has the correct name
+- **Wallpaper not changing**: 
+  - Make sure you've manually set a wallpaper through System Settings first (see setup requirements above)
+  - Ensure the image file exists and has the correct name
+  - Check that "Show on all Spaces" is enabled
 - **Permission errors**: The script needs accessibility permissions to change wallpapers
 - **Image not found**: Check that the filename matches exactly (case-sensitive)
 - **Wallpaper not showing on all spaces**: You need to enable "Show on all spaces" in System Settings
 - **Plist file not found**: Make sure you've set a wallpaper through System Settings at least once
+- **Default wallpaper still showing**: You must change from the default macOS wallpaper to any other image first
 
 ### Available Themes
 

@@ -130,8 +130,6 @@ setopt autocd # Change dir by typing name
 ZVM_VI_INSERT_ESCAPE_BINDKEY=jj
 ZVM_VI_VISUAL_ESCAPE_BINDKEY=jj
 
-
-
 # Load Powerlevel10k theme
 source $HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme
 

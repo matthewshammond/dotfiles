@@ -45,6 +45,8 @@ This repository contains my personal dotfiles and system configuration, designed
 > - Whether to include pentesting tools
 > - Various other configuration options
 
+> **Important**: After installation, you must manually set up the wallpaper system for sketchybar themes to work properly. See the [Post-Installation](#-post-installation) section for details.
+
 ## 🎯 What Gets Installed
 
 ### 🛠️ Development Tools
@@ -128,7 +130,31 @@ After running the installation script, a few manual steps are required:
 2. Configure application-specific settings
 3. Set up security features (FileVault, Firewall)
 4. Import GPG keys and configure SSH
-5. Review the full checklist in the installation output
+5. **Set up wallpaper system for sketchybar themes** (see below)
+6. Review the full checklist in the installation output
+
+### 🖼️ Wallpaper Setup for sketchybar Themes
+
+**Important**: For sketchybar theme switching to work properly with wallpaper changes, you must manually set up the wallpaper system first:
+
+1. **Go to System Settings > Wallpaper**
+2. **Change the wallpaper to ANY image** (not the default macOS wallpaper)
+3. **Make sure "Show on all Spaces" is enabled**
+4. **Apply the changes**
+
+This step is crucial because macOS needs to initialize its wallpaper management system before sketchybar can programmatically change wallpapers. Without this setup, theme switching will work but wallpapers won't change.
+
+> **Note**: Simply enabling/disabling "Show on all Spaces" on the default wallpaper is not sufficient. You must actually change the wallpaper to a different image first.
+
+### 📝 Neovim Setup for Theme Switching
+
+**Important**: For sketchybar theme switching to work with Neovim themes, you must initialize Neovim first:
+
+1. **Open Neovim** (`nvim` in terminal or launch the app)
+2. **Wait for LazyVim to install all plugins** (this may take a few minutes)
+3. **Quit Neovim** (`:q` or `Cmd+Q`)
+
+This step is required because LazyVim needs to install and configure all plugins before the theme system can properly switch Neovim themes when you change sketchybar themes.
 
 ## 🤝 Contributing
 
