@@ -49,19 +49,6 @@ pdfcompress ()
     -sOutputFile="$output" "$file"
 }
 
-# Toggle hidden files in Finder
-togglehidden() {
-  if [[ $(defaults read com.apple.finder AppleShowAllFiles) -eq 0 ]]; then
-    defaults write com.apple.finder AppleShowAllFiles -boolean true
-    killall Finder
-    echo "Hidden files are now visible"
-  else
-    defaults write com.apple.finder AppleShowAllFiles -boolean false
-    killall Finder
-    echo "Hidden files are now hidden"
-  fi
-}
-
 # Create new website post
 # usage: hnp <title.md>
 hnp ()
