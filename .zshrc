@@ -109,18 +109,14 @@ resetcard() {
   gpg --card-status
 }
 
-# Lazy load sudo with vim conversion
+# Use nvim whenever `sudo vim` is called
 sudo() {
-    unset -f sudo
-    sudo() {
-        if [[ "$1" = "vim" ]]; then
-            shift
-            command sudo nvim "$@"
-        else
-            command sudo "$@"
-        fi
-    }
-    sudo "$@"
+  if [[ "$1" = "vim" ]]; then
+    shift
+    command sudo nvim "$@"
+  else
+    command sudo "$@"
+  fi
 }
 
 # General Settings
