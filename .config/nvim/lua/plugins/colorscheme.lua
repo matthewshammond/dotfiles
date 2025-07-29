@@ -15,4 +15,13 @@ return {
 			vim.g.everforest_better_performance = 1
 		end,
 	},
+	{
+		"catppuccin/nvim",
+		name = "catppuccin",
+		config = function()
+			require("catppuccin").setup({
+				transparent_background = true,
+			})
+		end,
+	},
 }

@@ -27,11 +27,11 @@ return {
 	-- when switching themes
 	ubersicht_clock = {
 		position = {
-			top = "80%",    -- Clock position from top (e.g., "80%", "100px")
-			left = "50%",   -- Clock position from left (e.g., "50%", "200px")
+			top = "80%", -- Clock position from top (e.g., "80%", "100px")
+			left = "50%", -- Clock position from left (e.g., "50%", "200px")
 		},
-		background = "#434E63",    -- Background color for clock digits (Nord Polar Night 3)
-		font = "#ECEFF4",          -- Font color for digits and separator (Nord Snow Storm 3)
+		background = "#434E63", -- Background color for clock digits (Nord Polar Night 3)
+		font = "#ECEFF4", -- Font color for digits and separator (Nord Snow Storm 3)
 	},
 
 	-- ========================================
