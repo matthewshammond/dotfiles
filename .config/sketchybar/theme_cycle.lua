@@ -315,6 +315,64 @@ if os.getenv("CONFIG_DIR") or true then
 		end
 	end
 
+	-- Update Übersicht clock widget if specified in the current theme
+	if theme.ubersicht_clock then
+		local ubersicht_widget_file = os.getenv("HOME") .. "/Library/Application Support/Übersicht/widgets/flip-clock.widget/index.coffee"
+		local file = io.open(ubersicht_widget_file, "r")
+		if file then
+			local content = file:read("*all")
+			file:close()
+			local new_content = content
+
+			-- Update clock position
+			if theme.ubersicht_clock.position then
+				if theme.ubersicht_clock.position.top then
+					new_content = new_content:gsub(
+						"top: [^%s]+",
+						function() return "top: " .. theme.ubersicht_clock.position.top end
+					)
+				end
+				if theme.ubersicht_clock.position.left then
+					new_content = new_content:gsub(
+						"left: [^%s]+",
+						function() return "left: " .. theme.ubersicht_clock.position.left end
+					)
+				end
+			end
+
+			-- Update background color
+			if theme.ubersicht_clock.background then
+				new_content = new_content:gsub(
+					"background: #[%x]+",
+					"background: " .. theme.ubersicht_clock.background
+				)
+			end
+
+			-- Update font color (digits and separator)
+			if theme.ubersicht_clock.font then
+				new_content = new_content:gsub(
+					"color: #[%x]+",
+					"color: " .. theme.ubersicht_clock.font
+				)
+			end
+
+			-- Write the updated content back
+			local write_file = io.open(ubersicht_widget_file, "w")
+			if write_file then
+				write_file:write(new_content)
+				write_file:close()
+				print("Updated Übersicht clock widget colors and position")
+				
+				-- Trigger Übersicht refresh
+				os.execute("osascript -e 'tell application \"Übersicht\" to refresh' 2>/dev/null")
+			else
+				print("Warning: Could not write to Übersicht widget file: " .. ubersicht_widget_file)
+			end
+		else
+			print("Warning: Could not read Übersicht widget file: " .. ubersicht_widget_file)
+		end
+	end
+
 	-- Trigger the theme_changed event to recreate spaces and update all widgets
 	os.execute("sketchybar --trigger theme_changed")
 end

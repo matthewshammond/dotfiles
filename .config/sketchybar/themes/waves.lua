@@ -12,6 +12,20 @@ return {
 	ghostty_opacity = 0.75, -- Medium opacity for waves theme
 
 	-- ========================================
+	-- OPTIONAL: Übersicht Clock Widget Configuration
+	-- ========================================
+	-- Uncomment and configure to automatically update Übersicht flip-clock widget
+	-- when switching themes
+	ubersicht_clock = {
+		position = {
+			top = "50%", -- Clock position from top (e.g., "80%", "100px")
+			left = "50%", -- Clock position from left (e.g., "50%", "200px")
+		},
+		background = "#0c2a28", -- Background color for clock digits (Everforest blue)
+		font = "#BB957C", -- Font color for digits and separator (white for contrast)
+	},
+
+	-- ========================================
 	-- WIDGET CONFIGURATION
 	-- ========================================
 	-- Uncomment widgets you want to show, comment out widgets you want to hide

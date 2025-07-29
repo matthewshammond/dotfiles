@@ -35,6 +35,20 @@ return {
 	-- ghostty_opacity = 0.75, -- Example: 0.75 for 75% opacity, 1.0 for fully opaque
 
 	-- ========================================
+	-- OPTIONAL: Übersicht Clock Widget Configuration
+	-- ========================================
+	-- Uncomment and configure to automatically update Übersicht flip-clock widget
+	-- when switching themes
+	-- ubersicht_clock = {
+	-- position = {
+	-- top = "80%",    -- Clock position from top (e.g., "80%", "100px")
+	-- left = "50%",   -- Clock position from left (e.g., "50%", "200px")
+	-- },
+	-- background = "#434E63",    -- Background color for clock digits
+	-- font = "#ECEFF4",          -- Font color for digits and separator
+	-- },
+
+	-- ========================================
 	-- WIDGET CONFIGURATION
 	-- ========================================
 	-- Uncomment widgets you want to show, comment out widgets you want to hide
@@ -245,10 +259,28 @@ return {
 --   - Example: cpu = false to disable CPU widget
 --   - Example: Move "battery" before "wifi" to change order
 --
+-- EXTERNAL APPLICATION INTEGRATION:
+-- The theme system supports automatic configuration of external applications:
+--   - neovim_theme: Automatically changes Neovim theme when switching sketchybar themes
+--   - ghostty_theme: Automatically changes Ghostty theme when switching sketchybar themes
+--   - ghostty_opacity: Automatically changes Ghostty background opacity
+--   - ubersicht_clock: Automatically updates Übersicht flip-clock widget colors and position
+--
+-- ÜBERSICHT CLOCK WIDGET CONFIGURATION:
+-- To configure the Übersicht flip-clock widget, add a ubersicht_clock section:
+--   ubersicht_clock = {
+--       position = {
+--           top = "80%",    -- Clock position from top (e.g., "80%", "100px")
+--           left = "50%",   -- Clock position from left (e.g., "50%", "200px")
+--       },
+--       background = "#434E63",    -- Background color for clock digits
+--       font = "#ECEFF4",          -- Font color for digits and separator
+--   },
+-- Note: Comment out any variables you don't want to change when switching themes
+--
 -- COLOR FORMAT EXAMPLES:
 --   color("#2E3440")           -- Standard hex color (fully opaque)
 --   color("#2E3440", 200)      -- With custom alpha (0-255)
 --   transparent("#2E3440", 90) -- With percentage transparency (0-100)
 --   0xff2e3440                 -- Traditional format (still works)
 -- ========================================
-

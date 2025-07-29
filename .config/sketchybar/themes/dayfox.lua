@@ -21,6 +21,20 @@ return {
 	ghostty_opacity = 1.00, -- Light theme works well with lower opacity
 
 	-- ========================================
+	-- OPTIONAL: Übersicht Clock Widget Configuration
+	-- ========================================
+	-- Uncomment and configure to automatically update Übersicht flip-clock widget
+	-- when switching themes
+	ubersicht_clock = {
+		position = {
+			top = "50%", -- Clock position from top (e.g., "80%", "100px")
+			left = "50%", -- Clock position from left (e.g., "50%", "200px")
+		},
+		background = "#81A1C1", -- Background color for clock digits (Nord Frost 2)
+		font = "#2E3440", -- Font color for digits and separator (Nord Polar Night 0)
+	},
+
+	-- ========================================
 	-- WIDGET CONFIGURATION
 	-- ========================================
 	-- Uncomment widgets you want to show, comment out widgets you want to hide

@@ -314,6 +314,68 @@ apple:subscribe("mouse.clicked", function()
 				end
 			end
 
+			-- Update Übersicht clock widget if specified in the current theme
+			print("Checking for Übersicht clock configuration...")
+			if new_theme.ubersicht_clock then
+				print("Found Übersicht clock configuration for theme: " .. new_theme.name)
+				local ubersicht_widget_file = os.getenv("HOME") .. "/Library/Application Support/Übersicht/widgets/flip-clock.widget/index.coffee"
+				local file = io.open(ubersicht_widget_file, "r")
+				if file then
+					local content = file:read("*all")
+					file:close()
+					local new_content = content
+
+					-- Update clock position
+					if new_theme.ubersicht_clock.position then
+						if new_theme.ubersicht_clock.position.top then
+							new_content = new_content:gsub(
+								"top: [^%s]+",
+								function() return "top: " .. new_theme.ubersicht_clock.position.top end
+							)
+						end
+						if new_theme.ubersicht_clock.position.left then
+							new_content = new_content:gsub(
+								"left: [^%s]+",
+								function() return "left: " .. new_theme.ubersicht_clock.position.left end
+							)
+						end
+					end
+
+					-- Update background color
+					if new_theme.ubersicht_clock.background then
+						new_content = new_content:gsub(
+							"background: #[%x]+",
+							"background: " .. new_theme.ubersicht_clock.background
+						)
+					end
+
+					-- Update font color (digits and separator)
+					if new_theme.ubersicht_clock.font then
+						new_content = new_content:gsub(
+							"color: #[%x]+",
+							"color: " .. new_theme.ubersicht_clock.font
+						)
+					end
+
+					-- Write the updated content back
+					local write_file = io.open(ubersicht_widget_file, "w")
+					if write_file then
+						write_file:write(new_content)
+						write_file:close()
+						print("Updated Übersicht clock widget colors and position")
+						
+						-- Trigger Übersicht refresh
+						sbar.exec("osascript -e 'tell application \"Übersicht\" to refresh' 2>/dev/null")
+					else
+						print("Warning: Could not write to Übersicht widget file: " .. ubersicht_widget_file)
+					end
+				else
+					print("Warning: Could not read Übersicht widget file: " .. ubersicht_widget_file)
+				end
+			else
+				print("No Übersicht clock configuration found for theme: " .. new_theme.name)
+			end
+
 			-- Trigger the theme_changed event
 			sbar.exec("sketchybar --trigger theme_changed")
 
@@ -325,6 +387,11 @@ apple:subscribe("mouse.clicked", function()
 			})
 
 			-- Close the popup
+			apple:set({
+				popup = {
+					drawing = false,
+				},
+			})
 			sbar.exec("sketchybar --remove theme_selector")
 			for j = 1, #ThemeManager.theme_names do
 				sbar.exec("sketchybar --remove theme_option_" .. j)
