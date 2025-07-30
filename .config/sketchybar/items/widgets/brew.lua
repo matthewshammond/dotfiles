@@ -36,31 +36,41 @@ sbar.add("item", { position = "right", width = settings.group_paddings })
 
 -- Function to update brew count using sbar.exec
 local function brew_update()
-	sbar.exec("timeout 30 brew update && brew outdated | wc -l | tr -d ' ' 2>/dev/null || echo '0'", function(result, exit_code)
-		if not exit_code or exit_code == 0 or exit_code == 124 then -- nil means success, 124 is timeout exit code
-			-- Extract just the number from the result (handle newlines and other text)
-			local count = 0
-			for num in string.gmatch(result, "%d+") do
-				count = tonumber(num) or 0
-				break -- Take the first number found
+	-- Get brew outdated count
+	sbar.exec("timeout 30 brew update && brew outdated | wc -l | tr -d ' ' 2>/dev/null || echo '0'", function(brew_result, brew_exit_code)
+		-- Get mas outdated count
+		sbar.exec("timeout 30 mas outdated | wc -l | tr -d ' ' 2>/dev/null || echo '0'", function(mas_result, mas_exit_code)
+			local brew_count = 0
+			local mas_count = 0
+			
+			-- Parse brew count
+			if not brew_exit_code or brew_exit_code == 0 or brew_exit_code == 124 then
+				for num in string.gmatch(brew_result, "%d+") do
+					brew_count = tonumber(num) or 0
+					break
+				end
 			end
+			
+			-- Parse mas count
+			if not mas_exit_code or mas_exit_code == 0 or mas_exit_code == 124 then
+				for num in string.gmatch(mas_result, "%d+") do
+					mas_count = tonumber(num) or 0
+					break
+				end
+			end
+			
+			local total_count = brew_count + mas_count
 			local color = colors.brew_widget_icon or colors.white
 			
-			if count > 0 then
+			if total_count > 0 then
 				color = colors.brew_widget_alert or colors.red
 			end
 			
 			brew:set({
 				icon = { color = color },
-				label = { string = tostring(count) },
+				label = { string = tostring(total_count) },
 			})
-		else
-			-- Fallback to 0 on error
-			brew:set({
-				icon = { color = colors.brew_widget_icon or colors.white },
-				label = { string = "0" },
-			})
-		end
+		end)
 	end)
 end
 
@@ -76,18 +86,22 @@ local function clear_popup_items()
 end
 
 local function get_brew_packages()
-	sbar.exec("brew outdated", function(result, exit_code)
-		if not exit_code or exit_code == 0 then -- nil means success
-			-- Clear existing popup items
-			clear_popup_items()
-			
-			-- Add brew packages with unique names
-			local i = 0
-			for package in string.gmatch(result, "[^\r\n]+") do
+	-- Clear existing popup items
+	clear_popup_items()
+	
+	local timestamp = os.time()
+	local brew_counter = 0
+	local mas_counter = 1000 -- Start mas counter at 1000 to avoid conflicts
+	
+	-- Get brew packages (runs in parallel)
+	sbar.exec("brew outdated", function(brew_result, brew_exit_code)
+		-- Add brew packages
+		if not brew_exit_code or brew_exit_code == 0 then
+			for package in string.gmatch(brew_result, "[^\r\n]+") do
 				if not package:match("^==>") then
 					local package_name = package:match("^([^%s]+)")
 					if package_name then
-						local unique_name = "brew.popup." .. i .. "." .. os.time()
+						local unique_name = "brew.popup." .. brew_counter .. "." .. timestamp
 						sbar.add("item", unique_name, {
 							position = "popup." .. brew.name,
 							icon = {
@@ -101,9 +115,39 @@ local function get_brew_packages()
 								font = { family = settings.font.text },
 							},
 						})
-						table.insert(popup_items, unique_name) -- Track the item
-						i = i + 1
+						table.insert(popup_items, unique_name)
+						brew_counter = brew_counter + 1
 					end
+				end
+			end
+		end
+	end)
+	
+	-- Get mas packages (runs in parallel)
+	sbar.exec("mas outdated", function(mas_result, mas_exit_code)
+		if not mas_exit_code or mas_exit_code == 0 then
+			for package in string.gmatch(mas_result, "[^\r\n]+") do
+				-- mas outdated format: "ID Name (Current -> Latest)"
+				-- Extract the app name between ID and version info
+				local app_name = package:match("^%d+%s+([^%(]+)")
+				if app_name then
+					app_name = app_name:gsub("%s+$", "") -- trim trailing spaces
+					local unique_name = "mas.popup." .. mas_counter .. "." .. timestamp
+					sbar.add("item", unique_name, {
+						position = "popup." .. brew.name,
+						icon = {
+							string = "📱",
+							color = colors.brew_widget_icon or colors.white,
+							font = { size = 14.0 },
+						},
+						label = {
+							string = app_name,
+							color = colors.brew_widget_text or colors.white,
+							font = { family = settings.font.text },
+						},
+					})
+					table.insert(popup_items, unique_name)
+					mas_counter = mas_counter + 1
 				end
 			end
 		end
