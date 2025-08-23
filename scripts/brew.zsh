@@ -248,6 +248,7 @@ brew install ncdu       # Disk usage analyzer
 brew install progress   # Progress bar for coreutils
 
 # Search and navigation
+brew install atuin      # Shell history and scripts
 brew install fd         # Find alternative
 brew install fzf        # Fuzzy finder
 brew install ripgrep    # Grep alternative

@@ -109,6 +109,9 @@ resetcard() {
   gpg --card-status
 }
 
+# Initialize atuin (shell history sync)
+eval "$(atuin init zsh)"
+
 # Use nvim whenever `sudo vim` is called
 sudo() {
   if [[ "$1" = "vim" ]]; then

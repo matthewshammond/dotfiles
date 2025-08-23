@@ -29,6 +29,9 @@
 cmd + shift - j : yabai -m window --focus "$(yabai -m query --windows --space | jq -re "[sort_by(.id, .frame) | .[] | select(.role == \"AXWindow\" and .subrole == \"AXStandardWindow\") | .id] | nth(index($(yabai -m query --windows --window | jq -re ".id")) - 1)")"
 cmd + shift - k : yabai -m window --focus "$(yabai -m query --windows --space | jq -re "[sort_by(.id, .frame) | reverse | .[] | select(.role == \"AXWindow\" and .subrole == \"AXStandardWindow\") | .id] | nth(index($(yabai -m query --windows --window | jq -re ".id")) - 1)")"
 
+# Hyper + ; to restore minimized front window
+hyper - 0x29 : osascript ~/.dotfiles/scripts/restore_minimized_window.applescript
+
 # toggle menu bar opacity
 fn - n: yabai -m config menubar_opacity 0.0
 fn - m: yabai -m config menubar_opacity 1.0
