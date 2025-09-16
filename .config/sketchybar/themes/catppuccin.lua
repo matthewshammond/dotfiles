@@ -15,7 +15,7 @@ return {
 	neovim_theme = "catppuccin-frappe",
 
 	-- Ghostty theme name (uncomment and set to automatically change Ghostty theme when switching sketchybar themes)
-	ghostty_theme = "catppuccin-frappe",
+	ghostty_theme = "catppuccin frappe",
 
 	-- Ghostty background opacity (uncomment and set to automatically change Ghostty opacity when switching sketchybar themes)
 	ghostty_opacity = 0.85, -- Medium-high opacity for catppuccin theme
