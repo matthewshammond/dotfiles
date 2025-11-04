@@ -275,6 +275,7 @@ brew install lua        # Programming language
 brew install neovim     # Text editor
 brew install node       # JavaScript runtime
 brew install tmux       # Terminal multiplexer
+brew install tree-sitter-cli # Treesitter cli for neovim
 brew install watch      # Execute program periodically
 
 # Security tools
@@ -343,6 +344,7 @@ brew install --cask rustdesk         # Remote desktop
 
 # Productivity
 brew install --cask chatgpt          # AI assistant
+brew install --cask codex            # Chatgpt CLI
 brew install --cask discord          # Communication
 brew install --cask firefox          # Web browser
 brew install --cask microsoft-office # Office suite
