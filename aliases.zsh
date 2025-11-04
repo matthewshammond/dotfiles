@@ -269,7 +269,7 @@ gcr()
     git push -u origin main
 }
 
-# Create git repository
+# Create private git repository
 # usage: gcpr <name>
 gcpr()
 {
