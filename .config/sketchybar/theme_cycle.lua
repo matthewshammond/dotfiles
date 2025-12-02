@@ -118,18 +118,78 @@ local function set_wallpaper_for_all_spaces(wallpaper_path)
 	end
 	plist_file:close()
 
-	-- Function to safely update a plist path
-	local function update_plist_path(path, value)
-		local command =
-			string.format('/usr/libexec/PlistBuddy -c "set %s file://%s" "%s" 2>/dev/null', path, value, plist_path)
-		local result = os.execute(command)
-		return result == 0 or result == true
-	end
-
 	-- Function to check if a plist path exists
 	local function plist_path_exists(path)
 		local command = string.format('/usr/libexec/PlistBuddy -c "Print %s" "%s" 2>/dev/null', path, plist_path)
 		local result = os.execute(command)
+		return result == 0 or result == true
+	end
+
+	-- Function to update Configuration data (for macOS Tahoe)
+	-- Uses Python to create binary plist and update the Configuration key
+	local function update_configuration_data(choices_path, wallpaper_path)
+		local config_path = choices_path .. ":Configuration"
+
+		-- Check if Configuration exists
+		if not plist_path_exists(config_path) then
+			return false
+		end
+
+		-- Create temporary Python script file
+		local python_script_file = os.tmpname() .. ".py"
+		local python_script = string.format([[
+import plistlib
+import tempfile
+import sys
+
+config = {
+    'type': 'imageFile',
+    'url': {
+        'relative': 'file://%s'
+    }
+}
+
+# Create binary plist
+binary_data = plistlib.dumps(config, fmt=plistlib.FMT_BINARY)
+
+# Write to temp file
+temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.plist')
+temp_file.write(binary_data)
+temp_file.close()
+print(temp_file.name)
+]], wallpaper_path:gsub("\\", "\\\\"):gsub("'", "\\'"))
+
+		-- Write Python script to temp file
+		local script_file = io.open(python_script_file, "w")
+		if not script_file then
+			return false
+		end
+		script_file:write(python_script)
+		script_file:close()
+
+		-- Execute Python script to create binary plist
+		local python_command = string.format('python3 "%s" 2>/dev/null', python_script_file)
+		local handle = io.popen(python_command)
+		if not handle then
+			os.remove(python_script_file)
+			return false
+		end
+
+		local temp_plist = handle:read("*line")
+		handle:close()
+		os.remove(python_script_file)
+
+		if not temp_plist or temp_plist == "" then
+			return false
+		end
+
+		-- Use PlistBuddy to import the binary data
+		local import_command = string.format('/usr/libexec/PlistBuddy -c "Import %s %s" "%s" 2>/dev/null', config_path, temp_plist, plist_path)
+		local result = os.execute(import_command)
+
+		-- Clean up temp plist file
+		os.remove(temp_plist)
+
 		return result == 0 or result == true
 	end
 
@@ -153,42 +213,46 @@ local function set_wallpaper_for_all_spaces(wallpaper_path)
 
 	local success = false
 
-	-- Try to update SystemDefault if it exists
-	if plist_path_exists("SystemDefault:Desktop:Content:Choices:0:Files:0:relative") then
-		success = update_plist_path("SystemDefault:Desktop:Content:Choices:0:Files:0:relative", absolute_path)
-			or success
+	-- Try to update SystemDefault if it exists (macOS Tahoe uses Configuration data)
+	local system_default_choices = "SystemDefault:Desktop:Content:Choices:0"
+	if plist_path_exists(system_default_choices) then
+		success = update_configuration_data(system_default_choices, absolute_path) or success
 	end
 
-	-- Try to update AllSpacesAndDisplays if it exists
-	if plist_path_exists("AllSpacesAndDisplays:Desktop:Content:Choices:0:Files:0:relative") then
-		success = update_plist_path("AllSpacesAndDisplays:Desktop:Content:Choices:0:Files:0:relative", absolute_path)
-			or success
+	-- Try to update AllSpacesAndDisplays if it exists (macOS Tahoe uses Configuration data)
+	local all_spaces_choices = "AllSpacesAndDisplays:Desktop:Content:Choices:0"
+	if plist_path_exists(all_spaces_choices) then
+		success = update_configuration_data(all_spaces_choices, absolute_path) or success
 	end
 
-	-- Try to update Displays section if it exists
+	-- Try to update Displays section if it exists (macOS Tahoe uses Configuration data)
 	if plist_path_exists("Displays") then
 		local display_keys = get_dict_keys("Displays")
 		for _, display_id in ipairs(display_keys) do
-			local display_path = string.format("Displays:%s:Desktop:Content:Choices:0:Files:0:relative", display_id)
-			if plist_path_exists(display_path) then
-				update_plist_path(display_path, absolute_path)
+			local display_choices = string.format("Displays:%s:Desktop:Content:Choices:0", display_id)
+			if plist_path_exists(display_choices) then
+				if update_configuration_data(display_choices, absolute_path) then
+					success = true
+				end
 			end
 		end
 	end
 
-	-- Try to update Spaces section if it exists
+	-- Try to update Spaces section if it exists (macOS Tahoe uses Configuration data)
 	if plist_path_exists("Spaces") then
 		local space_keys = get_dict_keys("Spaces")
 		for _, space_id in ipairs(space_keys) do
 			-- Try different possible paths for each space
-			local space_paths = {
-				string.format("Spaces:%s:Desktop:Content:Choices:0:Files:0:relative", space_id),
-				string.format("Spaces:%s:Default:Desktop:Content:Choices:0:Files:0:relative", space_id),
+			local space_choices_paths = {
+				string.format("Spaces:%s:Desktop:Content:Choices:0", space_id),
+				string.format("Spaces:%s:Default:Desktop:Content:Choices:0", space_id),
 			}
 
-			for _, space_path in ipairs(space_paths) do
-				if plist_path_exists(space_path) then
-					update_plist_path(space_path, absolute_path)
+			for _, space_choices in ipairs(space_choices_paths) do
+				if plist_path_exists(space_choices) then
+					if update_configuration_data(space_choices, absolute_path) then
+						success = true
+					end
 				end
 			end
 
@@ -197,13 +261,11 @@ local function set_wallpaper_for_all_spaces(wallpaper_path)
 			if plist_path_exists(space_displays_path) then
 				local display_keys = get_dict_keys(space_displays_path)
 				for _, display_id in ipairs(display_keys) do
-					local display_path = string.format(
-						"Spaces:%s:Displays:%s:Desktop:Content:Choices:0:Files:0:relative",
-						space_id,
-						display_id
-					)
-					if plist_path_exists(display_path) then
-						update_plist_path(display_path, absolute_path)
+					local display_choices = string.format("Spaces:%s:Displays:%s:Desktop:Content:Choices:0", space_id, display_id)
+					if plist_path_exists(display_choices) then
+						if update_configuration_data(display_choices, absolute_path) then
+							success = true
+						end
 					end
 				end
 			end
