@@ -119,13 +119,13 @@ if [ "$install_python" = "y" ]; then
     eval "$(pyenv virtualenv-init -)"
     
     # Install Python versions if they don't exist
-    if ! pyenv versions | grep -q "3.12.2"; then
-        print_step "Installing Python 3.12.2..."
-        pyenv install 3.12.2
+    if ! pyenv versions | grep -q "3.14"; then
+        print_step "Installing Python 3.14..."
+        pyenv install 3.14
         pyenv rehash
-        pyenv global 3.12.2
+        pyenv global 3.14
     else
-        print_success "Python 3.12.2 is already installed"
+        print_success "Python 3.14 is already installed"
     fi
     
     # Set global Python version
@@ -153,13 +153,13 @@ if [ "$install_go" = "y" ]; then
     export PATH="$GOENV_ROOT/bin:$PATH"
     
     # Install Go version if it doesn't exist
-    if ! goenv versions | grep -q "1.24.2"; then
-        print_step "Installing Go 1.24.2..."
-        goenv install 1.24.2
+    if ! goenv versions | grep -q "1.25.4"; then
+        print_step "Installing Go 1.25.4..."
+        goenv install 1.25.4
         goenv rehash
-        goenv global 1.24.2
+        goenv global 1.25.4
     else
-        print_success "Go 1.24.2 is already installed"
+        print_success "Go 1.25.4 is already installed"
     fi
     
     print_success "Go environment configured"
@@ -176,13 +176,13 @@ if [ "$install_ruby" = "y" ]; then
     export PATH="$RBENV_ROOT/bin:$PATH"
 
     # Install Ruby version if it doesn't exist
-    if ! rbenv versions | grep -q "3.4.2"; then
-        print_step "Installing Ruby 3.4.2..."
-        rbenv install 3.4.2
-        rbenv global 3.4.2
+    if ! rbenv versions | grep -q "3.4.7"; then
+        print_step "Installing Ruby 3.4.7..."
+        rbenv install 3.4.7
+        rbenv global 3.4.7
         gem update --system
     else
-        print_success "Ruby 3.4.2 is already installed"
+        print_success "Ruby 3.4.7 is already installed"
     fi
     
     # Install gems if not already installed
@@ -283,7 +283,6 @@ brew install gnupg      # GNU Privacy Guard
 brew install hopenpgp-tools  # OpenPGP tools
 brew install pinentry-mac  # PIN entry
 brew install ykman      # YubiKey manager
-brew install ykpers     # YubiKey personalization
 
 # macOS specific
 brew install mas        # Mac App Store CLI
@@ -347,7 +346,7 @@ brew install --cask chatgpt          # AI assistant
 brew install --cask codex            # Chatgpt CLI
 brew install --cask discord          # Communication
 brew install --cask firefox          # Web browser
-brew install --cask microsoft-office # Office suite
+brew install --cask libreoffice      # Office Suite
 brew install --cask microsoft-teams  # Team collaboration
 brew install --cask pdf-expert       # PDF editor
 brew install --cask plex             # Media server
