@@ -180,7 +180,7 @@ gpc () {
     if [ -z "$1" ] && [ -z "$2" ]
     then
         # If no arguments, check for changes in private files
-        echo "Checking for changes in private files..."
+        echo "🔍 Checking for changes in private files..."
         # Check root level private files
         for file in .gitconfig .gnupg/* .ntfy.yml .ssh/* hosts*; do
             if [ -f "$file" ] && [ -f "private/$file" ]; then
