@@ -27,3 +27,4 @@ quick-terminal-animation-duration = 0
 
 # Shell
 shell-integration-features = ssh-env,ssh-terminfo
+keybind = shift+enter=text:\x1b\r
