@@ -342,11 +342,12 @@ brew install --cask qgis             # GIS software
 brew install --cask rustdesk         # Remote desktop
 
 # Productivity
-brew install --cask chatgpt          # AI assistant
-brew install --cask codex            # Chatgpt CLI
+brew install --cask claude           # AI assistant
+brew install --cask claude-code      # Claude CLI
 brew install --cask discord          # Communication
 brew install --cask firefox          # Web browser
 brew install --cask libreoffice      # Office Suite
+brew install --cask microsoft-outlook # Email App
 brew install --cask microsoft-teams  # Team collaboration
 brew install --cask pdf-expert       # PDF editor
 brew install --cask plex             # Media server
