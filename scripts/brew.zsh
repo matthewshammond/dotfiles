@@ -286,6 +286,7 @@ brew install ykman      # YubiKey manager
 
 # macOS specific
 brew install mas        # Mac App Store CLI
+brew install mole       # Deep clean and optimize your Mac (mo)
 
 print_success "CLI tools installed successfully"
 
