@@ -342,7 +342,7 @@ alias load='load-ssh.sh'
 # ssh
 # alias gemini="ssh -J voyager Gemini -t '/usr/local/bin/tmux -CC attach || /usr/local/bin/tmux -CC'"
 # alias Gemini="ssh Gemini -t '/usr/local/bin/tmux -CC attach || /usr/local/bin/tmux -CC'"
-alias pka="ssh voyager -t '/opt/homebrew/bin/tmux attach'"
+alias simon="ssh voyager -t '/opt/homebrew/bin/tmux attach'"
 # alias voyager="ssh voyager -t '/opt/homebrew/bin/tmux -CC attach || /opt/homebrew/bin/tmux -CC'"
 alias voyager="ssh voyager -t '/opt/homebrew/bin/tmux attach || /opt/homebrew/bin/tmux new'"
 # alias Voyager="ssh Voyager -t '/opt/homebrew/bin/tmux -CC attach || /opt/homebrew/bin/tmux -CC'"
