@@ -270,6 +270,7 @@ brew install youtubedr  # YouTube downloader
 brew install cmake      # Build system
 brew install gh         # GitHub CLI
 brew install git        # Version control
+brew install herdr      # Terminal multiplexer
 brew install hugo       # Static site generator
 brew install lua        # Programming language
 brew install neovim     # Text editor
