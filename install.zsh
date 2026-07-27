@@ -278,6 +278,11 @@ print_step "Installing custom font and SbarLua..."
 /opt/homebrew/bin/brew services restart sketchybar
 print_success "Sketchybar setup complete"
 
+# Start herdr
+print_header "Starting herdr"
+/opt/homebrew/bin/brew services start herdr
+print_success "herdr setup complete"
+
 # Configure Touch ID for sudo
 print_header "Configuring Security"
 print_step "Setting up Touch ID for sudo..."

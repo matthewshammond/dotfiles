@@ -57,7 +57,7 @@ hnp ()
         echo 'hnp <title>';
         return 1;
     fi;
-    cd /Users/matthammond/projects/website && hugo new content articles/2025/"$1".md --kind article && vim content/articles/2025/"$1".md
+    cd /Users/matthammond/projects/website && hugo new content articles/2026/"$1".md --kind article && vim content/articles/2026/"$1".md
 }
 
 # Download youtube video
