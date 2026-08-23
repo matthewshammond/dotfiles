@@ -338,27 +338,34 @@ gpged ()
 }
 
 alias gpgdd='gpgtar -d' # Decrypt directory
-alias load='load-ssh.sh'
+
+# Load SSH key from USB (/Volumes/Keys), then eject. usage: load [hours] (default 1)
+load() {
+  local timeout=${1:-1}
+  local timeout_seconds=$((timeout * 3600))
+  local key_volume="/Volumes/Keys"
+  local key_file="$key_volume/id_ed25519"
+
+  print -P "%F{yellow}Waiting for USB drive with SSH key…%f"
+  while [[ ! -d $key_volume ]]; do
+    sleep 1
+  done
+  print -P "%F{green}USB drive detected%f"
+
+  ssh-add -D
+  ssh-add -t "$timeout_seconds" "$key_file" || return 1
+  print -P "%F{green}SSH key loaded for ${timeout}h%f"
+
+  diskutil eject "$key_volume"
+  print -P "%F{green}USB drive ejected%f"
+}
 
 # ssh
-# alias gemini="ssh -J voyager Gemini -t '/usr/local/bin/tmux -CC attach || /usr/local/bin/tmux -CC'"
-# alias Gemini="ssh Gemini -t '/usr/local/bin/tmux -CC attach || /usr/local/bin/tmux -CC'"
-alias simon="ssh voyager -t '/opt/homebrew/bin/tmux new -A -s simon'"
-# alias voyager="ssh voyager -t '/opt/homebrew/bin/tmux -CC attach || /opt/homebrew/bin/tmux -CC'"
-alias voyager="ssh voyager -t '/opt/homebrew/bin/tmux attach || /opt/homebrew/bin/tmux new'"
-# alias Voyager="ssh Voyager -t '/opt/homebrew/bin/tmux -CC attach || /opt/homebrew/bin/tmux -CC'"
-# alias magellan="ssh -J voyager Magellan -t 'tmux -CC attach || tmux -CC'"
-# alias Magellan="ssh Magellan -t 'tmux -CC attach || tmux -CC'"
-# alias artemis="ssh -J voyager Artemis"
-# alias Artemis="ssh Artemis"
-# alias apollo="ssh -J voyager Apollo -t 'tmux -CC attach || tmux -CC'"
-alias apollo="tailscale ssh apollo -t 'tmux attach || tmux new'"
-# alias Apollo="ssh Apollo -t 'tmux -CC attach || tmux -CC'"
-# alias atlas="ssh -J voyager Atlas -t 'tmux -CC attach || tmux -CC'"
-alias atlas="tailscale ssh atlas -t 'tmux attach || tmux new'"
-# alias Atlas="ssh Atlas -t 'tmux -CC attach || tmux -CC'"
-# alias aeropoint="ssh aeropoint -t '/usr/bin/tmux -CC attach || /usr/bin/tmux -CC'"
-alias aeropoint="ssh aeropoint -t 'tmux attach || tmux new'"
+alias voyager="herdr --remote voyager"
+alias apollo="herdr --remote apollo"
+alias atlas="herdr --remote atlas"
+alias aeropoint="herdr --remote aeropoint"
+alias matthammond="herdr --remote matthammond"
 alias vnc="ssh -f -o ExitOnForwardFailure=yes -L 15900:10.13.10.15:5900 voyager sleep 10; open vnc://127.0.0.1:15900"
 alias VNC="open vnc://10.13.10.15"
 alias proxy="nohup /Applications/ProxyToggle.app/Contents/MacOS/ProxyToggle > /dev/null 2>&1 &"
@@ -369,3 +376,52 @@ alias burpOFF="networksetup -setwebproxystate 'Wi-Fi' off && networksetup -setse
 alias serve='nohup python3 -m http.server 80 &'
 alias pgstart='pg_ctl -D /opt/homebrew/var/postgresql@14 start'
 alias pgstop='pg_ctl -D /opt/homebrew/var/postgresql@14 stop'
+
+# Upgrade yabai and refresh its sudoers hash (binary path changes on brew upgrade)
+update_yabai() {
+  yabai --stop-service
+  yabai --uninstall-service
+  brew upgrade yabai
+  yabai --start-service
+  echo "$(whoami) ALL=(root) NOPASSWD: sha256:$(shasum -a 256 "$(which yabai)" | cut -d " " -f 1) $(which yabai) --load-sa" | sudo tee /private/etc/sudoers.d/yabai
+}
+
+# Enable Touch ID for sudo (one-time pam setup)
+enable_touchid() {
+  if grep -q 'pam_tid.so' /etc/pam.d/sudo; then
+    print -P "%F{green}Touch ID already enabled for sudo%f"
+    return 0
+  fi
+  sudo sed -i '' '2i\'$'\n''auth       sufficient     pam_tid.so'$'\n' /etc/pam.d/sudo
+  print -P "%F{green}Touch ID enabled for sudo%f"
+}
+
+# Spoof Wi-Fi MAC. usage: mac_spoof XX:XX:XX:XX:XX:XX
+mac_spoof() {
+  if [[ -z $1 ]]; then
+    echo 'mac_spoof XX:XX:XX:XX:XX:XX'
+    return 1
+  fi
+  networksetup -setairportpower en0 on
+  sudo /System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport --disassociate
+  sudo ifconfig en0 ether "$1"
+  printf '%s\n' "Spoofed MAC address of en0 interface to $(ifconfig en0 | grep ether | awk '{print $2}')"
+  printf '%s\n' "Hardware MAC address of en0 interface is $(networksetup -listallhardwareports | awk -v RS= '/en0/{print $NF}')"
+}
+
+# Move matching files into same-named folders. usage: f2f [globs…] (default: common video types)
+f2f() {
+  setopt local_options null_glob
+  local patterns=("$@")
+  local file folder
+  (( $# )) || patterns=(*.avi *.AVI *.mp4 *.MP4 *.mkv *.MKV *.m4v *.M4V)
+  for file in $patterns; do
+    [[ -f $file ]] || continue
+    folder=${file%.*}
+    mkdir -p "$folder"
+    mv "$file" "$folder/"
+  done
+}
+
+# Thorough app uninstall helper
+alias appclean='app-cleaner.sh'

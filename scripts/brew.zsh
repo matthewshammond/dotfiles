@@ -262,7 +262,7 @@ brew install jq         # JSON processor
 
 # Network tools
 brew install openvpn    # VPN client
-brew install speedtest-cli  # Internet speed test
+brew install cloudflare-speed-cli   # Internet speed test
 brew install wget       # Web downloader
 brew install youtubedr  # YouTube downloader
 
@@ -348,9 +348,11 @@ brew install --cask claude           # AI assistant
 brew install --cask claude-code      # Claude CLI
 brew install --cask discord          # Communication
 brew install --cask firefox          # Web browser
-brew install --cask libreoffice      # Office Suite
+brew install --cask microsoft-excel  # Spreadsheets
 brew install --cask microsoft-outlook # Email App
+brew install --cask microsoft-powerpoint # Presentation
 brew install --cask microsoft-teams  # Team collaboration
+brew install --cask microsoft-word   # Word editor
 brew install --cask pdf-expert       # PDF editor
 brew install --cask plex             # Media server
 brew install --cask raycast          # Launcher
