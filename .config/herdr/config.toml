@@ -1,0 +1,39 @@
+onboarding = false
+
+[theme]
+name = "terminal"
+auto_switch = false
+
+[ui]
+mouse_capture = true
+prompt_new_workspace_name = true
+
+[keys]
+# Prefix
+prefix = "alt+a"
+detach = "prefix+d"
+
+# Pane management
+split_vertical = "alt+d"
+split_horizontal = "alt+shift+d"
+close_pane = "alt+w"
+
+# Pane navigation
+cycle_pane_previous = "alt+["
+cycle_pane_next = "alt+]"
+focus_pane_left = "alt+h"
+focus_pane_down = "alt+j"
+focus_pane_up = "alt+k"
+focus_pane_right = "alt+l"
+
+# Window/tab management
+previous_tab = "alt+shift+["
+next_tab = "alt+shift+]"
+new_tab = "alt+t"
+new_workspace = "alt+n"
+
+goto = "prefix+g"
+toggle_sidebar = "prefix+e"
+
+[keys.indexed]
+tabs = "alt"

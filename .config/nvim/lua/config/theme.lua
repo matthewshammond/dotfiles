@@ -1,1 +1,1 @@
-return "catppuccin-frappe"
+return "nord"
