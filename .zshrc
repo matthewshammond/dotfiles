@@ -146,6 +146,19 @@ zvm_after_init() {
   local fzf_shell="$HOMEBREW_PREFIX/opt/fzf/shell"
   source "$fzf_shell/completion.zsh"
   source "$fzf_shell/key-bindings.zsh"
+
+  # Restore trigger-less kill Tab (removed upstream; keep brew scripts untouched)
+  functions[_fzf_completion_orig]=$functions[fzf-completion]
+  fzf-completion() {
+    local -a words=(${(z)LBUFFER})
+    if [[ ${LBUFFER[-1]} == ' ' && ${words[1]} == kill ]]; then
+      prefix= _fzf_complete_kill "$LBUFFER"
+      zle reset-prompt
+      return
+    fi
+    _fzf_completion_orig "$@"
+  }
+  zle -N fzf-completion
 }
 
 # Defer heavier plugins (order matters: vi-mode before syntax-highlighting)
