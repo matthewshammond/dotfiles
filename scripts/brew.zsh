@@ -348,6 +348,7 @@ brew install --cask claude           # AI assistant
 brew install --cask claude-code      # Claude CLI
 brew install --cask discord          # Communication
 brew install --cask firefox          # Web browser
+brew install --cask fluidvoice       # voice-to-text dictation app
 brew install --cask microsoft-excel  # Spreadsheets
 brew install --cask microsoft-outlook # Email App
 brew install --cask microsoft-powerpoint # Presentation
