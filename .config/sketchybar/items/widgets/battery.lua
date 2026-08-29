@@ -3,6 +3,9 @@ local colors = require("colors")
 local settings = require("settings")
 local popup = require("helpers.popup")
 
+local config_dir = os.getenv("CONFIG_DIR") or (os.getenv("HOME") .. "/.config/sketchybar")
+local battery_time = "/usr/bin/python3 " .. string.format("%q", config_dir .. "/helpers/battery_time.py")
+
 -- Desktops (Mac mini, Studio, iMac, Mac Pro) have no InternalBattery.
 local function has_internal_battery()
 	local pipe = io.popen("pmset -g batt 2>/dev/null")
@@ -155,9 +158,11 @@ local battery_popup = popup.controller(battery)
 
 local function show_battery_details()
 	battery_popup.keep()
-	sbar.exec("pmset -g batt", function(batt_info)
-		local found, _, remaining = batt_info:find(" (%d+:%d+) remaining")
-		local label = found and remaining .. "h" or "No estimate"
+	sbar.exec(battery_time, function(result)
+		local label = (result or ""):gsub("%s+$", "")
+		if label == "" then
+			label = "No estimate"
+		end
 		remaining_time:set({ label = label })
 	end)
 end
