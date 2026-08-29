@@ -31,6 +31,7 @@ local cal = sbar.add("item", {
 		border_width = 1,
 		height = 20,
 	},
+	click_script = "open -a Calendar",
 })
 
 -- Padding item required because of bracket

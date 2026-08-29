@@ -1,6 +1,7 @@
 local colors = require("colors")
 local icons = require("icons")
 local settings = require("settings")
+local popup = require("helpers.popup")
 
 local popup_width = 250
 
@@ -93,49 +94,41 @@ volume_percent:subscribe("volume_change", function(env)
   volume_slider:set({ slider = { percentage = volume } })
 end)
 
-local function volume_collapse_details()
-  local drawing = volume_bracket:query().popup.drawing == "on"
-  if not drawing then return end
-  volume_bracket:set({ popup = { drawing = false } })
-  sbar.remove('/volume.device\\.*/')
-end
+local volume_popup = popup.controller(volume_bracket)
+volume_popup.bind_sticky(volume_slider)
 
 local current_audio_device = "None"
-local function volume_toggle_details(env)
-  if env.BUTTON == "right" then
+local function volume_show_details(env)
+  if env and env.BUTTON == "right" then
     sbar.exec("open /System/Library/PreferencePanes/Sound.prefpane")
     return
   end
 
-  local should_draw = volume_bracket:query().popup.drawing == "off"
-  if should_draw then
-    volume_bracket:set({ popup = { drawing = true } })
-    sbar.exec("SwitchAudioSource -t output -c", function(result)
-      current_audio_device = result:sub(1, -2)
-      sbar.exec("SwitchAudioSource -a -t output", function(available)
-        current = current_audio_device
-        local device_color = colors.yellow
-        local counter = 0
-
-        for device in string.gmatch(available, '[^\r\n]+') do
-          local device_color = colors.yellow
-          if current == device then
-            device_color = colors.yellow
-          end
-          sbar.add("item", "volume.device." .. counter, {
-            position = "popup." .. volume_bracket.name,
-            width = popup_width,
-            align = "center",
-            label = { string = device, color = device_color },
-            click_script = 'SwitchAudioSource -s "' .. device .. '"'
-          })
-          counter = counter + 1
-        end
-      end)
-    end)
-  else
-    volume_collapse_details()
+  local drawing = volume_bracket:query().popup.drawing
+  local already_open = drawing == "on" or drawing == true
+  volume_popup.keep()
+  if already_open then
+    return
   end
+
+  sbar.remove('/volume.device\\.*/')
+  sbar.exec("SwitchAudioSource -t output -c", function(result)
+    current_audio_device = result:sub(1, -2)
+    sbar.exec("SwitchAudioSource -a -t output", function(available)
+      local counter = 0
+      for device in string.gmatch(available, '[^\r\n]+') do
+        local device_item = sbar.add("item", "volume.device." .. counter, {
+          position = "popup." .. volume_bracket.name,
+          width = popup_width,
+          align = "center",
+          label = { string = device, color = colors.yellow },
+          click_script = 'SwitchAudioSource -s "' .. device .. '"'
+        })
+        volume_popup.bind_sticky(device_item)
+        counter = counter + 1
+      end
+    end)
+  end)
 end
 
 local function volume_scroll(env)
@@ -143,10 +136,13 @@ local function volume_scroll(env)
   sbar.exec('osascript -e "set volume output volume (output volume of (get volume settings) + ' .. delta .. ')"')
 end
 
-volume_icon:subscribe("mouse.clicked", volume_toggle_details)
+volume_popup.bind_sticky(volume_icon)
+volume_popup.bind_sticky(volume_percent)
+volume_icon:subscribe("mouse.clicked", volume_show_details)
+volume_icon:subscribe("mouse.entered", volume_show_details)
 volume_icon:subscribe("mouse.scrolled", volume_scroll)
-volume_percent:subscribe("mouse.clicked", volume_toggle_details)
-volume_percent:subscribe("mouse.exited.global", volume_collapse_details)
+volume_percent:subscribe("mouse.clicked", volume_show_details)
+volume_percent:subscribe("mouse.entered", volume_show_details)
 volume_percent:subscribe("mouse.scrolled", volume_scroll)
 
 -- Subscribe to theme changes to update colors
