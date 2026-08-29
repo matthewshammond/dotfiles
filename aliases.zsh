@@ -140,7 +140,21 @@ alias listen='lsof -i TCP -n -P | grep LISTEN'
 alias cat='bat -p'
 alias ip='[ $(piactl get connectionstate) = "Connected" ] && echo "VPN IP:" $(piactl get vpnip) || echo "PUB IP:" $(curl -s ifconfig.me)'
 alias mac="printf '%s\n' 'Spoofed MAC address of en0 interface to $(ifconfig en0 | grep ether | awk '{print $2}')'; printf '%s\n' 'Hardware MAC address of en0 interface is $(networksetup -listallhardwareports | awk -v RS= '/en0/{print $NF}')'"
-alias update='brew update && brew upgrade && casks=("${(@f)$(brew outdated --cask --quiet)}"); (( ${#casks} )) && brew upgrade --cask --greedy "$casks[@]"; brew cleanup -s && brew autoremove && mas outdated && mas upgrade && rm -rf "$(brew --cache)"; sketchybar --trigger brew_update'
+update() {
+	brew update && brew upgrade || return $?
+	local -a casks
+	# "${(@f)$(cmd)}" becomes a single empty element when nothing is outdated,
+	# and `brew upgrade --cask --greedy ''` errors as Cask '.rb'.
+	casks=(${(f)"$(brew outdated --cask --quiet)"})
+	(( $#casks )) && brew upgrade --cask --greedy -- "${casks[@]}"
+	brew cleanup -s && brew autoremove
+	mas outdated
+	mas upgrade
+	local cache
+	cache="$(brew --cache)"
+	[[ -n $cache ]] && rm -rf "$cache"
+	sketchybar --trigger brew_update
+}
 alias dps='docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Ports}}\t{{.Status}}"'
 alias flushdns='sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder'
 
