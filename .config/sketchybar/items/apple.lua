@@ -3,6 +3,7 @@ local icons = require("icons")
 local settings = require("settings")
 local theme_system = require("themes")
 local ThemeManager = theme_system.manager
+local popup = require("helpers.popup")
 
 -- Padding item required because of bracket
 sbar.add("item", { width = 5 })
@@ -26,26 +27,17 @@ local apple = sbar.add("item", {
 	padding_right = 1,
 })
 
--- Handle theme selection popup on click
-apple:subscribe("mouse.clicked", function()
-	-- Get current theme
+local apple_popup = popup.controller(apple)
+local theme_popup_built = false
+
+local function show_theme_popup()
 	local current_theme = ThemeManager.get_current_theme()
 
-	-- Check if popup is already open
-	local popup_state = sbar.exec("sketchybar --query theme_selector 2>/dev/null")
-	if popup_state and popup_state ~= "" then
-		-- Close existing popup
-		apple:set({
-			popup = {
-				drawing = false,
-			},
-		})
-		sbar.exec("sketchybar --remove theme_selector")
-		for i = 1, #ThemeManager.theme_names do
-			sbar.exec("sketchybar --remove theme_option_" .. i)
-		end
+	if theme_popup_built then
+		apple_popup.keep()
 		return
 	end
+	theme_popup_built = true
 
 	-- Create theme selection popup with better positioning
 	local theme_popup = sbar.add("item", "theme_selector", {
@@ -272,13 +264,12 @@ apple:subscribe("mouse.clicked", function()
 		end)
 	end
 
-	-- Show the popup
-	apple:set({
-		popup = {
-			drawing = "toggle",
-		},
-	})
-end)
+	apple_popup.keep()
+end
+
+apple:subscribe("mouse.clicked", show_theme_popup)
+apple:subscribe("mouse.entered", show_theme_popup)
+apple:subscribe("mouse.exited", apple_popup.hide_now)
 
 -- Subscribe to theme changes to update the apple icon
 apple:subscribe("theme_changed", function()

@@ -1,14 +1,13 @@
 local icons = require("icons")
 local colors = require("colors")
 local settings = require("settings")
+local popup = require("helpers.popup")
 
 -- Execute the event provider binary which provides the event "network_update"
 -- for the network interface "en0", which is fired every 2.0 seconds.
 sbar.exec(
 	"killall network_load >/dev/null; $CONFIG_DIR/helpers/event_providers/network_load/bin/network_load en0 network_update 2.0"
 )
-sbar.exec("networksetup -getairportnetwork en0 | cut -c 24-")
-
 local popup_width = 250
 
 local wifi_up = sbar.add("item", "widgets.wifi1", {
@@ -204,38 +203,50 @@ wifi_down:subscribe("theme_changed", function()
     sbar.trigger("network_update")
 end)
 
-local function hide_details()
-	wifi_bracket:set({ popup = { drawing = false } })
+local function trim(value)
+	return (value or ""):gsub("^%s+", ""):gsub("%s+$", "")
 end
 
-local function toggle_details()
-	local should_draw = wifi_bracket:query().popup.drawing == "off"
-	if should_draw then
-		wifi_bracket:set({ popup = { drawing = true } })
-		sbar.exec("networksetup -getcomputername", function(result)
-			hostname:set({ label = result })
-		end)
-		sbar.exec("ipconfig getifaddr en0", function(result)
-			ip:set({ label = result })
-		end)
-		sbar.exec("ipconfig getsummary en0 | awk -F ' SSID : '  '/ SSID : / {print $2}'", function(result)
-			ssid:set({ label = result })
-		end)
-		sbar.exec("networksetup -getinfo Wi-Fi | awk -F 'Subnet mask: ' '/^Subnet mask: / {print $2}'", function(result)
-			mask:set({ label = result })
-		end)
-		sbar.exec("networksetup -getinfo Wi-Fi | awk -F 'Router: ' '/^Router: / {print $2}'", function(result)
-			router:set({ label = result })
-		end)
-	else
-		hide_details()
+-- macOS Location Services redacts the SSID to "<redacted>" for most CLI tools.
+local function network_name(raw, connected)
+	raw = trim(raw)
+	if raw == "" or raw:lower():find("redacted", 1, true) or raw:lower():find("not associated", 1, true) then
+		return connected and "Wi-Fi" or "Disconnected"
 	end
+	return raw
 end
 
-wifi_up:subscribe("mouse.clicked", toggle_details)
-wifi_down:subscribe("mouse.clicked", toggle_details)
-wifi:subscribe("mouse.clicked", toggle_details)
-wifi:subscribe("mouse.exited.global", hide_details)
+local wifi_popup = popup.controller(wifi_bracket)
+
+local function show_details()
+	wifi_popup.keep()
+	sbar.exec("ipconfig getifaddr en0", function(ip_result)
+		ip_result = trim(ip_result)
+		local connected = ip_result ~= ""
+		ip:set({ label = connected and ip_result or "—" })
+		sbar.exec("ipconfig getsummary en0 | awk -F ' SSID : ' '/ SSID : / {print $2}'", function(ssid_result)
+			ssid:set({ label = network_name(ssid_result, connected) })
+		end)
+	end)
+	sbar.exec("networksetup -getcomputername", function(result)
+		hostname:set({ label = trim(result) })
+	end)
+	sbar.exec("networksetup -getinfo Wi-Fi | awk -F 'Subnet mask: ' '/^Subnet mask: / {print $2}'", function(result)
+		mask:set({ label = trim(result) })
+	end)
+	sbar.exec("networksetup -getinfo Wi-Fi | awk -F 'Router: ' '/^Router: / {print $2}'", function(result)
+		router:set({ label = trim(result) })
+	end)
+end
+
+local function bind_icon(item)
+	item:subscribe("mouse.entered", show_details)
+	item:subscribe("mouse.exited", wifi_popup.hide_soon)
+end
+
+bind_icon(wifi)
+bind_icon(wifi_up)
+bind_icon(wifi_down)
 
 local function copy_label_to_clipboard(env)
 	local label = sbar.query(env.NAME).label.value

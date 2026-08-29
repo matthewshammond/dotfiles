@@ -1,5 +1,6 @@
 local icons = require("icons")
 local colors = require("colors")
+local popup = require("helpers.popup")
 
 local whitelist = { ["Spotify"] = true,
                     ["Music"] = true    };
@@ -16,7 +17,7 @@ local media = sbar.add("item", {
   }
 })
 
-sbar.add("item", {
+local media_back = sbar.add("item", {
   position = "popup." .. media.name,
   icon = { 
     string = icons.media.back,
@@ -24,7 +25,7 @@ sbar.add("item", {
   label = { drawing = false },
   click_script = "osascript -e 'tell application \"System Events\" to key code 123'",
 })
-sbar.add("item", {
+local media_play = sbar.add("item", {
   position = "popup." .. media.name,
   icon = { 
     string = icons.media.play_pause,
@@ -32,7 +33,7 @@ sbar.add("item", {
   label = { drawing = false },
   click_script = "osascript -e 'tell application \"System Events\" to key code 49'",
 })
-sbar.add("item", {
+local media_fwd = sbar.add("item", {
   position = "popup." .. media.name,
   icon = { 
     string = icons.media.forward,
@@ -61,6 +62,7 @@ media:subscribe("media_change", function(env)
   end
 end)
 
-media:subscribe("mouse.clicked", function(env)
-  media:set({ popup = { drawing = "toggle" }})
-end)
+local media_popup = popup.controller(media)
+
+media:subscribe("mouse.entered", media_popup.keep)
+media:subscribe("mouse.exited", media_popup.hide_now)
