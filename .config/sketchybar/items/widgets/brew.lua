@@ -33,7 +33,7 @@ local brew = sbar.add("item", "widgets.brew", {
 		border_width = 1,
 		height = 20,
 	},
-	update_freq = 300,
+	update_freq = 60,
 	popup = { align = "right" },
 })
 
@@ -41,7 +41,9 @@ sbar.add("item", { position = "right", width = settings.group_paddings })
 
 local popup_items = {}
 local updating = false
+local updating_started = 0
 local cached_list = nil
+local refresh_gen = 0
 local brew_popup = popup.controller(brew)
 
 local PACKAGE_ICONS = {
@@ -121,14 +123,28 @@ local function populate_popup(result)
 	end
 end
 
+local function spinning()
+	return updating and (os.time() - updating_started) < 120
+end
+
 local function refresh()
+	refresh_gen = refresh_gen + 1
+	local gen = refresh_gen
 	sbar.exec(brew_helper .. " count", function(count_result)
-		if not updating then
-			local count = tonumber((count_result or ""):match("%d+")) or 0
-			set_count(count)
+		if gen ~= refresh_gen then
+			return
 		end
+		if spinning() then
+			return
+		end
+		updating = false
+		local count = tonumber((count_result or ""):match("^(%d+)")) or 0
+		set_count(count)
 	end)
 	sbar.exec(brew_helper .. " list", function(list_result)
+		if gen ~= refresh_gen then
+			return
+		end
 		populate_popup(list_result)
 	end)
 end
@@ -148,7 +164,9 @@ brew:subscribe("mouse.clicked", function()
 	if updating then
 		return
 	end
+	refresh_gen = refresh_gen + 1
 	updating = true
+	updating_started = os.time()
 	brew_popup.hide_now()
 	cached_list = nil
 	populate_popup("")
@@ -167,16 +185,12 @@ brew:subscribe("brew_update", function()
 end)
 
 brew:subscribe({ "forced", "routine", "theme_changed" }, function()
-	if not updating then
-		refresh()
-	end
+	refresh()
 end)
 
 brew:subscribe("system_woke", function()
 	sbar.exec(brew_helper .. " fetch", function()
-		if not updating then
-			refresh()
-		end
+		refresh()
 	end)
 end)
 
