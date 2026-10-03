@@ -275,6 +275,10 @@ fi
 print_header "Setting up Sketchybar"
 print_step "Installing custom font and SbarLua..."
 (git clone https://github.com/FelixKratz/SbarLua.git /tmp/SbarLua && cd /tmp/SbarLua/ && make install && rm -rf /tmp/SbarLua/)
+print_step "Installing Simon Symbol font (space 8 icon)..."
+mkdir -p "$HOME/Library/Fonts"
+cp "${dotfiledir}/.config/sketchybar/icons/simon/SimonSymbol.otf" "$HOME/Library/Fonts/"
+print_success "Simon Symbol font installed"
 /opt/homebrew/bin/brew services restart sketchybar
 print_success "Sketchybar setup complete"
 
@@ -291,6 +295,16 @@ print_success "Touch ID configured for sudo"
 
 # System Modifications
 print_header "Configuring System Preferences"
+
+# Cmd+1..8 switches to Desktop 1..8 (sketchybar space clicks send these keys)
+print_step "Setting Cmd+1..8 to switch desktops..."
+space_keycodes=(18 19 20 21 23 22 26 28)
+for i in {1..8}; do
+  defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add $((117 + i)) \
+    "<dict><key>enabled</key><true/><key>value</key><dict><key>type</key><string>standard</string><key>parameters</key><array><integer>$((48 + i))</integer><integer>${space_keycodes[$i]}</integer><integer>1048576</integer></array></dict></dict>"
+done
+/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
+print_success "Cmd+1..8 desktop shortcuts set"
 
 ###############################################################################
 # General UI/UX                                                               #
@@ -515,7 +529,7 @@ echo "  ${ARROW} Configure Time Machine backup"
 echo "  ${ARROW} Set up Touch ID"
 echo "  ${ARROW} Configure Keyboard shortcuts"
 echo "  ${ARROW} Set up Hot Corners"
-echo "  ${ARROW} Set up 7 Spaces/Desktops (Control + Up Arrow to add new spaces)"
+echo "  ${ARROW} Confirm 8 Spaces/Desktops exist (yabai creates them when its scripting addition loads; otherwise Control + Up Arrow to add)"
 
 print_step "Applications:"
 echo "  ${ARROW} Sign in to 1Password"

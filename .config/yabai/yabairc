@@ -35,6 +35,11 @@ yabai -m config normal_window_opacity 0.9
 yabai -m config external_bar all:32:0
 
 #============================Space Settings===============================
+# make sure all 8 spaces exist (creates any missing ones on a fresh install)
+for _ in $(seq $(yabai -m query --spaces --display | jq length) 7); do
+  yabai -m space --create
+done
+
 # space names
 yabai -m space 1 --label "notes"
 yabai -m space 2 --label "web"
@@ -43,6 +48,7 @@ yabai -m space 4 --label "home"
 yabai -m space 5 --label "dev"
 yabai -m space 6 --label "email"
 yabai -m space 7 --label "calendar"
+yabai -m space 8 --label "grokbot"
 
 # specific space settings
 yabai -m config --space 1 layout bsp
@@ -52,6 +58,7 @@ yabai -m config --space 4 layout float
 yabai -m config --space 5 layout bsp
 yabai -m config --space 6 layout stack
 yabai -m config --space 7 layout bsp
+yabai -m config --space 8 layout bsp
 
 #==============================Rules======================================
 # specific settings
@@ -63,7 +70,8 @@ yabai -m rule --add app="^Ghostty$" subrole="AXStandardWindow" space=^5
 # yabai -m rule --add title="^(Main Terminal)$" space=^5
 yabai -m rule --add app="^(Spark|Mail|Microsoft Outlook)$" space=^6
 yabai -m rule --add app="^Calendar$" space=^7
-yabai -m rule --add app!="^(Notes|Safari|Firefox|Tor Browser|Spark|Mail|Microsoft Outlook|Calendar)$" manage=off sub-layer=below
+yabai -m rule --add app="^(GrokBot|Grokbot|Grok Bot|Grok)$" space=^8
+yabai -m rule --add app!="^(Notes|Safari|Firefox|Tor Browser|Spark|Mail|Microsoft Outlook|Calendar|GrokBot|Grokbot|Grok Bot|Grok)$" manage=off sub-layer=below
 
 #==============================Borders====================================
 # uses JankyBorders

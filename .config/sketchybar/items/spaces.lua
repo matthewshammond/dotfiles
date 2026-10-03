@@ -23,7 +23,7 @@ end
 
 -- Helper to get space count
 local function get_space_count()
-	return 7 -- Always 7 spaces for all themes
+	return 8 -- 7 standard spaces + Simon on space 8
 end
 
 -- Helper to get space icon for minimal theme
@@ -45,9 +45,14 @@ local function get_space_icon(space_number)
 	return minimal_icons[space_number] or tostring(space_number)
 end
 
+-- Simon (custom robot glyph) on space 8, from icons/simon/SimonSymbol.otf (U+E000)
+local SIMON_SPACE = 8
+local SIMON_GLYPH = utf8.char(0xE000)
+local SIMON_FONT = "Simon Symbol:Regular:17.0"
+
 -- Remove all space items, brackets, paddings, popups
 local function clear_spaces()
-	for i = 1, 7 do  -- Only remove 7 spaces, not 10
+	for i = 1, 8 do
 		sbar.remove("space." .. i)
 		sbar.remove("space.padding." .. i)
 		sbar.remove("bracket.space." .. i)
@@ -102,6 +107,10 @@ local function create_spaces()
 				},
 			},
 		})
+
+		if i == SIMON_SPACE then
+			space:set({ icon = { string = SIMON_GLYPH, font = SIMON_FONT, y_offset = 1 } })
+		end
 
 		spaces[i] = space
 
@@ -196,7 +205,7 @@ local function create_spaces()
 				})
 			else
 				-- Use correct key codes from skhd output for cmd+1, cmd+2, etc.
-				local key_codes = { 0x12, 0x13, 0x14, 0x15, 0x17, 0x16, 0x1a }
+				local key_codes = { 0x12, 0x13, 0x14, 0x15, 0x17, 0x16, 0x1a, 0x1c }
 				local key_code = key_codes[i]
 				if key_code then
 					sbar.exec(
