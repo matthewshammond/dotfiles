@@ -70,8 +70,8 @@ yabai -m rule --add app="^Ghostty$" subrole="AXStandardWindow" space=^5
 # yabai -m rule --add title="^(Main Terminal)$" space=^5
 yabai -m rule --add app="^(Spark|Mail|Microsoft Outlook)$" space=^6
 yabai -m rule --add app="^Calendar$" space=^7
-yabai -m rule --add app="^(GrokBot|Grokbot|Grok Bot|Grok)$" space=^8
-yabai -m rule --add app!="^(Notes|Safari|Firefox|Tor Browser|Spark|Mail|Microsoft Outlook|Calendar|GrokBot|Grokbot|Grok Bot|Grok)$" manage=off sub-layer=below
+yabai -m rule --add app="^Grok Bot$" space=^8
+yabai -m rule --add app!="^(Notes|Safari|Firefox|Tor Browser|Spark|Mail|Microsoft Outlook|Calendar|Grok Bot)$" manage=off sub-layer=below
 
 #==============================Borders====================================
 # uses JankyBorders
