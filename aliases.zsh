@@ -141,7 +141,7 @@ alias cat='bat -p'
 alias ip='[ $(piactl get connectionstate) = "Connected" ] && echo "VPN IP:" $(piactl get vpnip) || echo "PUB IP:" $(curl -s ifconfig.me)'
 alias mac="printf '%s\n' 'Spoofed MAC address of en0 interface to $(ifconfig en0 | grep ether | awk '{print $2}')'; printf '%s\n' 'Hardware MAC address of en0 interface is $(networksetup -listallhardwareports | awk -v RS= '/en0/{print $NF}')'"
 update() {
-	brew update && brew upgrade || return $?
+	brew update && brew upgrade -y || return $?
 	local -a casks
 	# "${(@f)$(cmd)}" becomes a single empty element when nothing is outdated,
 	# and `brew upgrade --cask --greedy ''` errors as Cask '.rb'.
