@@ -81,6 +81,7 @@ local header = sbar.add("item", "obs.popup.header", {
 })
 
 local rows = {}
+local refresh_webcam -- defined below; scene clicks refresh the Webcam label
 for i, scene in ipairs(scenes) do
 	local row = sbar.add("item", "obs.popup.scene." .. i, {
 		position = "popup." .. obs.name,
@@ -106,6 +107,9 @@ for i, scene in ipairs(scenes) do
 	row:subscribe("mouse.clicked", function()
 		send_scene(scene)
 		obs_popup.hide_now()
+		if refresh_webcam then
+			sbar.delay(0.5, refresh_webcam)
+		end
 	end)
 end
 
@@ -190,7 +194,7 @@ local function save_webcam_state()
 end
 local webcam_helper = "/usr/bin/python3 " .. string.format("%q", config_dir .. "/helpers/obs_webcam.py")
 -- Read the real state from OBS; keep the cached state if OBS isn't reachable
-local function refresh_webcam()
+function refresh_webcam()
 	sbar.exec(webcam_helper .. " status 2>/dev/null", function(out)
 		local v = (out or ""):match("(o[nf]f?)")
 		if v == "on" or v == "off" then
@@ -215,9 +219,17 @@ webcam_row:subscribe("mouse.clicked", function()
 		webcam_row:set({ label = { string = webcam_label() } })
 	end)
 end)
-obs:subscribe("mouse.clicked", refresh_webcam)
 
-obs:subscribe("mouse.clicked", obs_popup.keep)
+-- Icon click toggles the menu open/closed
+obs:subscribe("mouse.clicked", function()
+	local q = obs:query()
+	if q and q.popup and q.popup.drawing == "on" then
+		obs_popup.hide_now()
+	else
+		obs_popup.keep()
+		refresh_webcam()
+	end
+end)
 -- Fires only once the mouse has left both the icon and its menu
 obs:subscribe("mouse.exited.global", obs_popup.hide_now)
 

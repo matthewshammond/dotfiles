@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Show/hide the "Webcam" source in OBS's current program scene over obs-websocket.
+"""Show/hide the "Webcam" source over obs-websocket.
+
+status reports the live (program) scene's Webcam. toggle sets Webcam in EVERY
+scene that has it to the opposite of the live scene's state.
 
 Usage: obs_webcam.py status|toggle   -> prints "on" or "off"
 Exits non-zero if OBS is unreachable or the scene has no Webcam source.
@@ -25,7 +28,11 @@ def main():
         enabled = obs.request(sock, "GetSceneItemEnabled", ref)["sceneItemEnabled"]
         if sys.argv[1] == "toggle":
             enabled = not enabled
-            obs.request(sock, "SetSceneItemEnabled", dict(ref, sceneItemEnabled=enabled))
+            for sc in obs.request(sock, "GetSceneList")["scenes"]:
+                name = sc["sceneName"]
+                for it in obs.request(sock, "GetSceneItemList", {"sceneName": name})["sceneItems"]:
+                    if it["sourceName"] == SOURCE:
+                        obs.request(sock, "SetSceneItemEnabled", {"sceneName": name, "sceneItemId": it["sceneItemId"], "sceneItemEnabled": enabled})
         sock.close()
     except (OSError, ConnectionError, RuntimeError, ValueError, KeyError) as e:
         print(f"obs_webcam: {e}", file=sys.stderr)
