@@ -27,7 +27,7 @@ local apple = sbar.add("item", {
 	padding_right = 1,
 })
 
-local apple_popup = popup.controller(apple)
+local apple_popup = popup.controller(apple, { hide_delay = 0.25 })
 local theme_popup_built = false
 
 local function show_theme_popup()
@@ -269,7 +269,7 @@ end
 
 apple:subscribe("mouse.clicked", show_theme_popup)
 apple:subscribe("mouse.entered", show_theme_popup)
-apple:subscribe("mouse.exited", apple_popup.hide_now)
+apple:subscribe("mouse.exited.global", apple_popup.hide_now)
 
 -- Subscribe to theme changes to update the apple icon
 apple:subscribe("theme_changed", function()
