@@ -112,7 +112,7 @@ end
 -- Big cursor toggle for demos: pointer size 4.0 <-> previous size
 local cursor_toggle = string.format("%q", config_dir .. "/helpers/cursor_size/toggle.sh")
 local function cursor_label(state)
-	return "Big Cursor: " .. ((state or ""):match("on") and "On" or "Off")
+	return "Cursor: " .. ((state or ""):match("on") and "On" or "Off")
 end
 local cursor_row = sbar.add("item", "obs.popup.cursor", {
 	position = "popup." .. obs.name,
@@ -141,6 +141,7 @@ cursor_row:subscribe("mouse.clicked", function()
 	sbar.exec(cursor_toggle, function(out)
 		cursor_row:set({ label = { string = cursor_label(out) } })
 	end)
+	obs_popup.hide_now()
 end)
 
 obs:subscribe("mouse.clicked", obs_popup.keep)
