@@ -180,18 +180,42 @@ end)
 webcam_row:subscribe("mouse.exited", function()
 	webcam_row:set({ label = { color = theme_colors().white } })
 end)
-webcam_row:subscribe("mouse.clicked", function()
-	sbar.exec("osascript -e 'tell application \"System Events\" to key code 13 using {option down, shift down}'")
-	webcam_on = not webcam_on
+local function save_webcam_state()
 	os.execute("mkdir -p \"$HOME/.cache\"")
 	local f = io.open(webcam_state_file, "w")
 	if f then
 		f:write(webcam_on and "on" or "off")
 		f:close()
 	end
-	webcam_row:set({ label = { string = webcam_label() } })
+end
+local webcam_helper = "/usr/bin/python3 " .. string.format("%q", config_dir .. "/helpers/obs_webcam.py")
+-- Read the real state from OBS; keep the cached state if OBS isn't reachable
+local function refresh_webcam()
+	sbar.exec(webcam_helper .. " status 2>/dev/null", function(out)
+		local v = (out or ""):match("(o[nf]f?)")
+		if v == "on" or v == "off" then
+			webcam_on = (v == "on")
+			save_webcam_state()
+			webcam_row:set({ label = { string = webcam_label() } })
+		end
+	end)
+end
+refresh_webcam()
+webcam_row:subscribe("mouse.clicked", function()
 	obs_popup.hide_now()
+	-- websocket first (works from any space); hotkey fallback flips the tracked state
+	sbar.exec(webcam_helper .. " toggle 2>/dev/null || { osascript -e 'tell application \"System Events\" to key code 13 using {option down, shift down}' >/dev/null; echo fallback; }", function(out)
+		local v = (out or ""):match("(o[nf]f?)")
+		if v == "on" or v == "off" then
+			webcam_on = (v == "on")
+		else
+			webcam_on = not webcam_on
+		end
+		save_webcam_state()
+		webcam_row:set({ label = { string = webcam_label() } })
+	end)
 end)
+obs:subscribe("mouse.clicked", refresh_webcam)
 
 obs:subscribe("mouse.clicked", obs_popup.keep)
 -- Fires only once the mouse has left both the icon and its menu
