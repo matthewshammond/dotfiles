@@ -144,6 +144,55 @@ cursor_row:subscribe("mouse.clicked", function()
 	obs_popup.hide_now()
 end)
 
+-- Webcam source show/hide via OBS hotkey opt+shift+W (key code 13).
+-- OBS can't report visibility back, so state is tracked in a file (default Off).
+local webcam_state_file = os.getenv("HOME") .. "/.cache/obs-webcam-state"
+local function read_webcam_state()
+	local f = io.open(webcam_state_file, "r")
+	if not f then
+		return false
+	end
+	local v = f:read("*l")
+	f:close()
+	return v == "on"
+end
+local webcam_on = read_webcam_state()
+local function webcam_label()
+	return "Webcam: " .. (webcam_on and "On" or "Off")
+end
+local webcam_row = sbar.add("item", "obs.popup.webcam", {
+	position = "popup." .. obs.name,
+	icon = { drawing = false },
+	label = {
+		string = webcam_label(),
+		font = { size = 12.0 },
+		color = theme_colors().white,
+		padding_left = 10,
+		padding_right = 10,
+	},
+	background = { color = colors.transparent, corner_radius = 6, height = 22 },
+	width = 200,
+})
+rows[#rows + 1] = webcam_row
+webcam_row:subscribe("mouse.entered", function()
+	webcam_row:set({ label = { color = theme_colors().blue } })
+end)
+webcam_row:subscribe("mouse.exited", function()
+	webcam_row:set({ label = { color = theme_colors().white } })
+end)
+webcam_row:subscribe("mouse.clicked", function()
+	sbar.exec("osascript -e 'tell application \"System Events\" to key code 13 using {option down, shift down}'")
+	webcam_on = not webcam_on
+	os.execute("mkdir -p \"$HOME/.cache\"")
+	local f = io.open(webcam_state_file, "w")
+	if f then
+		f:write(webcam_on and "on" or "off")
+		f:close()
+	end
+	webcam_row:set({ label = { string = webcam_label() } })
+	obs_popup.hide_now()
+end)
+
 obs:subscribe("mouse.clicked", obs_popup.keep)
 -- Fires only once the mouse has left both the icon and its menu
 obs:subscribe("mouse.exited.global", obs_popup.hide_now)
