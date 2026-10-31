@@ -6,4 +6,9 @@
 \.ssh/
 hosts*
 # Ignore all variations of .DS_Store in all directories
-**/[Dd][Ss]_[Ss]tore
+**/.[Dd][Ss]_[Ss]tore
+
+# Python bytecode and editor backups
+__pycache__/
+*.pyc
+*.bak

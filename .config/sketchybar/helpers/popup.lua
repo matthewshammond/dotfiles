@@ -8,9 +8,10 @@ end
 
 local M = {}
 
-function M.controller(host)
+function M.controller(host, opts)
 	table.insert(hosts, host)
 	local token = 0
+	local hide_delay = (opts and opts.hide_delay) or 0.08
 
 	local function keep()
 		token = token + 1
@@ -31,7 +32,7 @@ function M.controller(host)
 	local function hide_soon()
 		token = token + 1
 		local mine = token
-		sbar.delay(0.08, function()
+		sbar.delay(hide_delay, function()
 			if mine == token then
 				hide_all()
 			end
