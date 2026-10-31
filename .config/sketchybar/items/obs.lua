@@ -109,6 +109,40 @@ for i, scene in ipairs(scenes) do
 	end)
 end
 
+-- Big cursor toggle for demos: pointer size 4.0 <-> previous size
+local cursor_toggle = string.format("%q", config_dir .. "/helpers/cursor_size/toggle.sh")
+local function cursor_label(state)
+	return "Big Cursor: " .. ((state or ""):match("on") and "On" or "Off")
+end
+local cursor_row = sbar.add("item", "obs.popup.cursor", {
+	position = "popup." .. obs.name,
+	icon = { drawing = false },
+	label = {
+		string = cursor_label("off"),
+		font = { size = 12.0 },
+		color = theme_colors().white,
+		padding_left = 10,
+		padding_right = 10,
+	},
+	background = { color = colors.transparent, corner_radius = 6, height = 22 },
+	width = 200,
+})
+rows[#rows + 1] = cursor_row
+sbar.exec(cursor_toggle .. " status", function(out)
+	cursor_row:set({ label = { string = cursor_label(out) } })
+end)
+cursor_row:subscribe("mouse.entered", function()
+	cursor_row:set({ label = { color = theme_colors().blue } })
+end)
+cursor_row:subscribe("mouse.exited", function()
+	cursor_row:set({ label = { color = theme_colors().white } })
+end)
+cursor_row:subscribe("mouse.clicked", function()
+	sbar.exec(cursor_toggle, function(out)
+		cursor_row:set({ label = { string = cursor_label(out) } })
+	end)
+end)
+
 obs:subscribe("mouse.clicked", obs_popup.keep)
 -- Fires only once the mouse has left both the icon and its menu
 obs:subscribe("mouse.exited.global", obs_popup.hide_now)
