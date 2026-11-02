@@ -344,6 +344,7 @@ brew install --cask qgis             # GIS software
 brew install --cask rustdesk         # Remote desktop
 
 # Productivity
+brew install --cask betterdisplay    # Display management tool
 brew install --cask claude           # AI assistant
 brew install --cask claude-code      # Claude CLI
 brew install --cask discord          # Communication
