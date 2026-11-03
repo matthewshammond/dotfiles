@@ -4,9 +4,14 @@ local popup = require("helpers.popup")
 local theme_system = require("themes")
 local ThemeManager = theme_system.manager
 
--- OBS scene switcher. Sits right after space 8 (Simon).
--- name must match the OBS scene name exactly; label (optional) is the menu text; key_code is the hotkey fallback
--- (opt+shift+<key>). Key codes: a=0, s=1, d=2, m=46
+-- OBS control menu. Sits right after space 8 (Simon). Three sections:
+--   Scenes  - switch the program scene
+--   Cameras - show/hide a camera source in every scene that has it
+--   Tools   - big cursor, and Screen share in the Demo scene
+--
+-- name/source must match OBS exactly; label (optional) is the menu text.
+-- key_code (optional) is an opt+shift+<key> hotkey fallback used when the
+-- OBS websocket is unreachable. Key codes: a=0, s=1, d=2, w=13, m=46
 local scenes = {
 	{ name = "Southern Company", key_code = 1 },
 	{ name = "MHI", label = "Matt Hammond Inc", key_code = 46 },
@@ -14,9 +19,57 @@ local scenes = {
 	{ name = "Demo", key_code = 2 },
 }
 
+local cameras = {
+	{ source = "Capcom", label = "iPhone" },
+	{ source = "Webcam", key_code = 13 },
+}
+
+-- Screen share: full-screen capture source inside the Demo scene only
+local SCREEN_SCENE = "Demo"
+local SCREEN_SOURCE = "Screen"
+
+local MENU_WIDTH = 200
+
 local function theme_colors()
 	local theme = ThemeManager.get_current_theme()
 	return (theme and theme.colors) or colors
+end
+
+local config_dir = os.getenv("CONFIG_DIR") or (os.getenv("HOME") .. "/.config/sketchybar")
+local function helper(name)
+	return "/usr/bin/python3 " .. string.format("%q", config_dir .. "/helpers/" .. name)
+end
+local scene_helper = helper("obs_scene.py")
+local camera_helper = helper("obs_camera.py")
+local screen_helper = helper("obs_source.py")
+	.. " "
+	.. string.format("%q", SCREEN_SCENE)
+	.. " "
+	.. string.format("%q", SCREEN_SOURCE)
+local cursor_toggle = string.format("%q", config_dir .. "/helpers/cursor_size/toggle.sh")
+
+local function hotkey(key_code)
+	return "osascript -e 'tell application \"System Events\" to key code "
+		.. key_code
+		.. " using {option down, shift down}' >/dev/null"
+end
+
+-- "on" / "off" from helper output, or nil if unknown
+local function parse_state(out)
+	local v = (out or ""):match("(o[nf]f?)")
+	if v == "on" or v == "off" then
+		return v
+	end
+	return nil
+end
+
+local function on_off(title, state)
+	if state == "on" then
+		return title .. ": On"
+	elseif state == "off" then
+		return title .. ": Off"
+	end
+	return title .. ": --"
 end
 
 -- Geometry mirrors the minimal-theme space icons in items/spaces.lua
@@ -39,65 +92,54 @@ local obs = sbar.add("item", "obs", {
 	popup = { align = "left" },
 })
 
-local obs_padding = sbar.add("item", "obs.padding", {
+sbar.add("item", "obs.padding", {
 	position = "left",
 	width = settings.group_paddings,
 })
 
 local obs_popup = popup.controller(obs, { hide_delay = 0.25 })
 
-local config_dir = os.getenv("CONFIG_DIR") or (os.getenv("HOME") .. "/.config/sketchybar")
-local obs_helper = "/usr/bin/python3 " .. string.format("%q", config_dir .. "/helpers/obs_scene.py")
-
--- Switch directly through the OBS websocket so it works from any app or space.
--- If the websocket is unreachable, fall back to the scene hotkey.
-local function send_scene(scene)
-	local cmd = obs_helper
-		.. " "
-		.. string.format("%q", scene.name)
-		.. " || osascript -e 'tell application \"System Events\" to key code "
-		.. scene.key_code
-		.. " using {option down, shift down}'"
-	sbar.exec(cmd)
-end
-
-local header = sbar.add("item", "obs.popup.header", {
-	position = "popup." .. obs.name,
-	icon = { drawing = false },
-	label = {
-		string = "OBS Scenes",
-		font = { size = 14.0, weight = "bold" },
-		color = theme_colors().white,
-		padding_left = 10,
-		padding_right = 10,
-	},
-	background = {
-		color = theme_colors().bg2,
-		border_color = theme_colors().blue,
-		border_width = 1,
-		corner_radius = 8,
-	},
-	width = 200,
-})
-
+local headers = {}
 local rows = {}
-local refresh_webcam -- defined below; scene clicks refresh the Webcam label
-for i, scene in ipairs(scenes) do
-	local row = sbar.add("item", "obs.popup.scene." .. i, {
+
+local function add_header(id, title)
+	local header = sbar.add("item", "obs.popup.header." .. id, {
 		position = "popup." .. obs.name,
 		icon = { drawing = false },
 		label = {
-			string = scene.label or scene.name,
+			string = title,
+			font = { size = 14.0, weight = "bold" },
+			color = theme_colors().white,
+			padding_left = 10,
+			padding_right = 10,
+		},
+		background = {
+			color = theme_colors().bg2,
+			border_color = theme_colors().blue,
+			border_width = 1,
+			corner_radius = 8,
+		},
+		width = MENU_WIDTH,
+	})
+	headers[#headers + 1] = header
+	return header
+end
+
+local function add_row(id, text, on_click)
+	local row = sbar.add("item", "obs.popup." .. id, {
+		position = "popup." .. obs.name,
+		icon = { drawing = false },
+		label = {
+			string = text,
 			font = { size = 12.0 },
 			color = theme_colors().white,
 			padding_left = 10,
 			padding_right = 10,
 		},
 		background = { color = colors.transparent, corner_radius = 6, height = 22 },
-		width = 200,
+		width = MENU_WIDTH,
 	})
-	rows[i] = row
-
+	rows[#rows + 1] = row
 	row:subscribe("mouse.entered", function()
 		row:set({ label = { color = theme_colors().blue } })
 	end)
@@ -105,120 +147,98 @@ for i, scene in ipairs(scenes) do
 		row:set({ label = { color = theme_colors().white } })
 	end)
 	row:subscribe("mouse.clicked", function()
-		send_scene(scene)
 		obs_popup.hide_now()
-		if refresh_webcam then
-			sbar.delay(0.5, refresh_webcam)
-		end
+		on_click()
+	end)
+	return row
+end
+
+-- Scenes ----------------------------------------------------------------
+
+local refresh_all -- defined below; scene switches refresh the toggle labels
+
+add_header("scenes", "Scenes")
+for i, scene in ipairs(scenes) do
+	add_row("scene." .. i, scene.label or scene.name, function()
+		-- websocket first (works from any space); hotkey fallback
+		sbar.exec(scene_helper .. " " .. string.format("%q", scene.name) .. " || " .. hotkey(scene.key_code))
+		sbar.delay(0.5, refresh_all)
 	end)
 end
 
--- Big cursor toggle for demos: pointer size 4.0 <-> previous size
-local cursor_toggle = string.format("%q", config_dir .. "/helpers/cursor_size/toggle.sh")
-local function cursor_label(state)
-	return "Cursor: " .. ((state or ""):match("on") and "On" or "Off")
+-- Cameras ---------------------------------------------------------------
+
+add_header("cameras", "Cameras")
+local camera_refreshers = {}
+for i, cam in ipairs(cameras) do
+	local title = cam.label or cam.source
+	local state = nil
+	local base = camera_helper .. " " .. string.format("%q", cam.source)
+	local row
+	local function apply(out, flip_if_unknown)
+		local v = parse_state(out)
+		if v then
+			state = v
+		elseif flip_if_unknown and state then
+			state = (state == "on") and "off" or "on"
+		end
+		row:set({ label = { string = on_off(title, state) } })
+	end
+	row = add_row("camera." .. i, on_off(title, nil), function()
+		local cmd = base .. " toggle 2>/dev/null"
+		if cam.key_code then
+			cmd = cmd .. " || { " .. hotkey(cam.key_code) .. "; echo fallback; }"
+		end
+		sbar.exec(cmd, function(out)
+			apply(out, true)
+		end)
+	end)
+	camera_refreshers[#camera_refreshers + 1] = function()
+		sbar.exec(base .. " status 2>/dev/null", function(out)
+			apply(out, false)
+		end)
+	end
 end
-local cursor_row = sbar.add("item", "obs.popup.cursor", {
-	position = "popup." .. obs.name,
-	icon = { drawing = false },
-	label = {
-		string = cursor_label("off"),
-		font = { size = 12.0 },
-		color = theme_colors().white,
-		padding_left = 10,
-		padding_right = 10,
-	},
-	background = { color = colors.transparent, corner_radius = 6, height = 22 },
-	width = 200,
-})
-rows[#rows + 1] = cursor_row
-sbar.exec(cursor_toggle .. " status", function(out)
-	cursor_row:set({ label = { string = cursor_label(out) } })
-end)
-cursor_row:subscribe("mouse.entered", function()
-	cursor_row:set({ label = { color = theme_colors().blue } })
-end)
-cursor_row:subscribe("mouse.exited", function()
-	cursor_row:set({ label = { color = theme_colors().white } })
-end)
-cursor_row:subscribe("mouse.clicked", function()
+
+-- Tools -----------------------------------------------------------------
+
+add_header("tools", "Tools")
+
+-- Big cursor for demos: pointer size 4.0 <-> previous size
+local function cursor_state(out)
+	return (out or ""):match("on") and "on" or "off"
+end
+local cursor_row
+cursor_row = add_row("cursor", on_off("Cursor", "off"), function()
 	sbar.exec(cursor_toggle, function(out)
-		cursor_row:set({ label = { string = cursor_label(out) } })
+		cursor_row:set({ label = { string = on_off("Cursor", cursor_state(out)) } })
 	end)
-	obs_popup.hide_now()
+end)
+sbar.exec(cursor_toggle .. " status", function(out)
+	cursor_row:set({ label = { string = on_off("Cursor", cursor_state(out)) } })
 end)
 
--- Webcam source show/hide via OBS hotkey opt+shift+W (key code 13).
--- OBS can't report visibility back, so state is tracked in a file (default Off).
-local webcam_state_file = os.getenv("HOME") .. "/.cache/obs-webcam-state"
-local function read_webcam_state()
-	local f = io.open(webcam_state_file, "r")
-	if not f then
-		return false
-	end
-	local v = f:read("*l")
-	f:close()
-	return v == "on"
-end
-local webcam_on = read_webcam_state()
-local function webcam_label()
-	return "Webcam: " .. (webcam_on and "On" or "Off")
-end
-local webcam_row = sbar.add("item", "obs.popup.webcam", {
-	position = "popup." .. obs.name,
-	icon = { drawing = false },
-	label = {
-		string = webcam_label(),
-		font = { size = 12.0 },
-		color = theme_colors().white,
-		padding_left = 10,
-		padding_right = 10,
-	},
-	background = { color = colors.transparent, corner_radius = 6, height = 22 },
-	width = 200,
-})
-rows[#rows + 1] = webcam_row
-webcam_row:subscribe("mouse.entered", function()
-	webcam_row:set({ label = { color = theme_colors().blue } })
-end)
-webcam_row:subscribe("mouse.exited", function()
-	webcam_row:set({ label = { color = theme_colors().white } })
-end)
-local function save_webcam_state()
-	os.execute("mkdir -p \"$HOME/.cache\"")
-	local f = io.open(webcam_state_file, "w")
-	if f then
-		f:write(webcam_on and "on" or "off")
-		f:close()
-	end
-end
-local webcam_helper = "/usr/bin/python3 " .. string.format("%q", config_dir .. "/helpers/obs_webcam.py")
--- Read the real state from OBS; keep the cached state if OBS isn't reachable
-function refresh_webcam()
-	sbar.exec(webcam_helper .. " status 2>/dev/null", function(out)
-		local v = (out or ""):match("(o[nf]f?)")
-		if v == "on" or v == "off" then
-			webcam_on = (v == "on")
-			save_webcam_state()
-			webcam_row:set({ label = { string = webcam_label() } })
-		end
+-- Screen share in the Demo scene. Check source names with:
+--   obs_source.py Demo --list
+local screen_row
+local function run_screen(action)
+	sbar.exec(screen_helper .. " " .. action .. " 2>/dev/null", function(out)
+		screen_row:set({ label = { string = on_off("Screen", parse_state(out)) } })
 	end)
 end
-refresh_webcam()
-webcam_row:subscribe("mouse.clicked", function()
-	obs_popup.hide_now()
-	-- websocket first (works from any space); hotkey fallback flips the tracked state
-	sbar.exec(webcam_helper .. " toggle 2>/dev/null || { osascript -e 'tell application \"System Events\" to key code 13 using {option down, shift down}' >/dev/null; echo fallback; }", function(out)
-		local v = (out or ""):match("(o[nf]f?)")
-		if v == "on" or v == "off" then
-			webcam_on = (v == "on")
-		else
-			webcam_on = not webcam_on
-		end
-		save_webcam_state()
-		webcam_row:set({ label = { string = webcam_label() } })
-	end)
+screen_row = add_row("screen", on_off("Screen", nil), function()
+	run_screen("toggle")
 end)
+
+-- Refresh + menu behaviour ----------------------------------------------
+
+function refresh_all()
+	for _, refresh in ipairs(camera_refreshers) do
+		refresh()
+	end
+	run_screen("status")
+end
+refresh_all()
 
 -- Icon click toggles the menu open/closed
 obs:subscribe("mouse.clicked", function()
@@ -227,7 +247,7 @@ obs:subscribe("mouse.clicked", function()
 		obs_popup.hide_now()
 	else
 		obs_popup.keep()
-		refresh_webcam()
+		refresh_all()
 	end
 end)
 -- Fires only once the mouse has left both the icon and its menu
@@ -242,7 +262,9 @@ place_after_simon()
 obs:subscribe("theme_changed", function()
 	local c = theme_colors()
 	obs:set({ icon = { color = c.space_icon or colors.grey } })
-	header:set({ label = { color = c.white }, background = { color = c.bg2, border_color = c.blue } })
+	for _, header in ipairs(headers) do
+		header:set({ label = { color = c.white }, background = { color = c.bg2, border_color = c.blue } })
+	end
 	for _, row in ipairs(rows) do
 		row:set({ label = { color = c.white } })
 	end
