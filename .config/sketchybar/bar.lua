@@ -7,6 +7,7 @@ local theme = ThemeManager.get_current_theme()
 -- Equivalent to the --bar domain
 sbar.bar({
 	topmost = "window",
+	display = "main",
 	height = theme.bar_config.height,
 	color = theme.colors.bar.bg,
 	padding_right = 0,

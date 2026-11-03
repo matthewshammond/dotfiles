@@ -32,7 +32,7 @@ yabai -m config active_window_opacity 1.0
 yabai -m config normal_window_opacity 0.9
 
 # Sketchybar spacing
-yabai -m config external_bar all:32:0
+yabai -m config external_bar main:32:0
 
 #============================Space Settings===============================
 # make sure all 8 spaces exist (creates any missing ones on a fresh install)
