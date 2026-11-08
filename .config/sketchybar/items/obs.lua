@@ -20,6 +20,7 @@ local scenes = {
 }
 
 local cameras = {
+	{ source = "Sony" },
 	{ source = "Capcom", label = "iPhone" },
 	{ source = "Webcam", key_code = 13 },
 }
