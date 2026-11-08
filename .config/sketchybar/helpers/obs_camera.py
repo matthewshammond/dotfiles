@@ -5,6 +5,10 @@ status reports the live (program) scene's copy of the source, or the first
 scene that has it if the live scene doesn't. toggle sets every scene's copy
 to the opposite of that state, so all scenes stay in sync.
 
+Turning a camera OFF also disconnects its device in OBS (camera light goes
+off, no hidden capture eating CPU). The device is remembered in OBS's
+profile persistent data and reconnected when the camera is turned ON.
+
 Usage: obs_camera.py "<source>" status|on|off|toggle   -> prints "on" or "off"
 Exits non-zero if OBS is unreachable or no scene has the source.
 """
@@ -15,6 +19,29 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import obs_scene as obs  # noqa: E402
 
 ACTIONS = ("status", "on", "off", "toggle")
+
+
+REALM = "OBS_WEBSOCKET_DATA_REALM_PROFILE"
+
+
+def set_device(sock, source, connect):
+    """Disconnect (connect=False) or reconnect (connect=True) a capture device."""
+    slot = f"sketchybar.camera_device.{source}"
+    settings = obs.request(sock, "GetInputSettings", {"inputName": source})["inputSettings"]
+    device = settings.get("device", "")
+    if not connect:
+        if device:
+            saved = {"device": device, "device_name": settings.get("device_name", "")}
+            obs.request(sock, "SetPersistentData", {"realm": REALM, "slotName": slot, "slotValue": saved})
+            obs.request(
+                sock,
+                "SetInputSettings",
+                {"inputName": source, "inputSettings": {"device": ""}, "overlay": True},
+            )
+    elif not device:
+        saved = obs.request(sock, "GetPersistentData", {"realm": REALM, "slotName": slot}).get("slotValue")
+        if saved:
+            obs.request(sock, "SetInputSettings", {"inputName": source, "inputSettings": saved, "overlay": True})
 
 
 def main():
@@ -38,12 +65,16 @@ def main():
         enabled = next((c[2] for c in copies if c[0] == live), copies[0][2])
         if action != "status":
             enabled = {"on": True, "off": False, "toggle": not enabled}[action]
+            if enabled:
+                set_device(sock, source, True)
             for name, item_id, _ in copies:
                 obs.request(
                     sock,
                     "SetSceneItemEnabled",
                     {"sceneName": name, "sceneItemId": item_id, "sceneItemEnabled": enabled},
                 )
+            if not enabled:
+                set_device(sock, source, False)
         sock.close()
     except (OSError, ConnectionError, RuntimeError, ValueError, KeyError) as e:
         print(f"obs_camera: {e}", file=sys.stderr)
