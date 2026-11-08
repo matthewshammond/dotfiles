@@ -267,6 +267,7 @@ brew install wget       # Web downloader
 brew install youtubedr  # YouTube downloader
 
 # Development tools
+brew install blackhole-2ch # virtual audio
 brew install cmake      # Build system
 brew install gh         # GitHub CLI
 brew install git        # Version control
@@ -348,13 +349,17 @@ brew install --cask betterdisplay    # Display management tool
 brew install --cask claude           # AI assistant
 brew install --cask claude-code      # Claude CLI
 brew install --cask discord          # Communication
+brew install --cask displaylink      # Promter XL monitor
+brew install --cask elgato-camera-hub # Prompter XL hub
 brew install --cask firefox          # Web browser
 brew install --cask fluidvoice       # voice-to-text dictation app
+brew install --cask grok-build       # Grok CLI
 brew install --cask microsoft-excel  # Spreadsheets
 brew install --cask microsoft-outlook # Email App
 brew install --cask microsoft-powerpoint # Presentation
 brew install --cask microsoft-teams  # Team collaboration
 brew install --cask microsoft-word   # Word editor
+brew install --cask obs              # Video conferencing software
 brew install --cask pdf-expert       # PDF editor
 brew install --cask plex             # Media server
 brew install --cask raycast          # Launcher

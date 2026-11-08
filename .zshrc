@@ -166,3 +166,9 @@ zsh-defer source "$HOMEBREW_PREFIX/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode
 zsh-defer source "$HOMEBREW_PREFIX/etc/profile.d/autojump.sh"
 zsh-defer source "$HOME/.dotfiles/aliases.zsh"
 zsh-defer source "$HOMEBREW_PREFIX/opt/zsh-syntax-highlighting/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+
+# >>> grok installer >>>
+export PATH="$HOME/.grok/bin:$PATH"
+fpath=(~/.grok/completions/zsh $fpath)
+autoload -Uz compinit && compinit -C
+# <<< grok installer <<<
