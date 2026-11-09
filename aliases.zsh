@@ -252,6 +252,38 @@ gpged ()
 
 alias gpgdd='gpgtar -d' # Decrypt directory
 
+# Tunnel to an AeroPoint company's two databases so pgAdmin can open them.
+# Looks up each container's current Docker IP on the server, then forwards
+#   localhost:<port>    -> aeropoint_db-<company>
+#   localhost:<port+1>  -> aeropoint_deconfliction-<company>
+# usage: pgtunnel <server> <company> [port]    e.g. pgtunnel atlas demo
+pgtunnel() {
+    if [[ -z $1 || -z $2 ]]; then
+        echo 'pgtunnel <server> <company> [port]    e.g. pgtunnel atlas demo'
+        echo '                                           pgtunnel aeropoint1 tva 5435'
+        echo '  main DB          -> localhost:<port>    (default 5433)'
+        echo '  deconfliction DB -> localhost:<port+1>  (default 5434)'
+        echo '  Ctrl+C closes the tunnel'
+        return 1
+    fi
+    local server=$1 company=$2 port=${3:-5433}
+    local main=aeropoint_db-$company decon=aeropoint_deconfliction-$company
+    local -a ips
+    ips=(${(f)"$(ssh "$server" "docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}' $main $decon" 2>/dev/null)"})
+    if (( ${#ips} != 2 )); then
+        echo "Couldn't find $main and $decon on $server"
+        return 1
+    fi
+    echo "AeroPoint '$company' on $server:"
+    echo "  aeropoint_db               -> localhost:$port"
+    echo "  aeropoint_deconfliction_db -> localhost:$((port + 1))"
+    echo "Tunnel open - Ctrl+C to close"
+    ssh -N -o ExitOnForwardFailure=yes \
+        -L "$port:${ips[1]%% *}:5432" \
+        -L "$((port + 1)):${ips[2]%% *}:5432" \
+        "$server"
+}
+
 # Load SSH key from USB (/Volumes/Keys), then eject. usage: load [hours] (default 1)
 load() {
   local timeout=${1:-1}
