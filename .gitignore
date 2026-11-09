@@ -12,3 +12,9 @@ hosts*
 __pycache__/
 *.pyc
 *.bak
+
+# Neovim plugin lockfile (changes on every :Lazy update)
+.config/nvim/lazy-lock.json
+
+# Karabiner rewrites these itself
+.config/karabiner/automatic_backups/
