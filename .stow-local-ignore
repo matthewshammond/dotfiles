@@ -9,9 +9,10 @@
 aliases.zsh
 hosts*
 install.zsh
-iTerm2Profile.json
 LICENSE
 plist
 private
 README.md
 scripts
+Brewfile
+Brewfile\.lock\.json
