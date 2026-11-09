@@ -2,163 +2,177 @@
 
 > A powerful, automated macOS setup and configuration system
 
-![macOS](https://img.shields.io/badge/macOS-Sequoia-black?style=flat&logo=apple)
+![macOS](https://img.shields.io/badge/macOS-Apple%20Silicon-black?style=flat&logo=apple)
 ![Shell](https://img.shields.io/badge/Shell-zsh-blue?style=flat&logo=gnu-bash)
 ![Package Manager](https://img.shields.io/badge/Package%20Manager-Homebrew-yellow?style=flat&logo=homebrew)
 ![Editor](https://img.shields.io/badge/Editor-Neovim-green?style=flat&logo=neovim)
-![Terminal](https://img.shields.io/badge/Terminal-Ghostty-purple?style=flat&logo=terminal)
+![Terminal](https://img.shields.io/badge/Terminal-Rex-purple?style=flat&logo=terminal)
 
-This repository contains my personal dotfiles and system configuration, designed to quickly set up a new macOS system with all my preferred tools, applications, and settings. It features a powerful installation script that handles everything from installing software to configuring system preferences.
+My personal dotfiles and macOS setup. One script takes a freshly installed Mac to my
+complete setup: apps, shell, window management, themes and system preferences.
 
-## ✨ Features
+Anyone is welcome to use the public part. My own machines also pull a private
+submodule (`private/`) with things like SSH, Git and GPG config.
 
-- 🔄 **One-Command Setup**: Fully automated installation process
-- 🎨 **Custom UI/UX**: Carefully crafted system preferences and UI settings
-- 🛠️ **Development Tools**: Comprehensive development environment setup
-- 🔒 **Security Focus**: Enhanced security configurations and tools
-- 🖥️ **Modern Terminal**: Feature-rich shell configuration with Starship cross-shell prompt
-- 📦 **Package Management**: Curated selection of CLI and GUI applications
-- 🎯 **Productivity**: Optimized workflow with carefully selected tools
-- 🔐 **GPG & SSH**: Secure configuration for development and communication
-- 🍺 **Homebrew**: Extensive collection of formulae and casks
-- 🐍 **Language Support**: Python, Ruby, Go, Rust, and Node.js environments
+## 🧭 Which setup do I need?
 
-## 🚀 Quick Start
+| Where | What to run |
+| --- | --- |
+| **My laptop / Mac mini** (full setup + private files + projects) | [New Mac setup](#-new-mac-setup-my-machines) |
+| **Any other Mac / VM** (public dotfiles only) | [Public install](#-public-install-anyone) |
+| **Remote server, Linux box, a friend's computer** (just Neovim) | [Neovim only](#-neovim-only) |
 
-1. Clone this repository:
+## 🔐 New Mac setup (my machines)
 
-   ```bash
-   git clone https://github.com/matthewshammond/dotfiles.git ~/.dotfiles
-   ```
+Start from a fresh macOS install. Nothing needs to be downloaded first.
 
-2. Run the installation script:
+**1. Install the Command Line Tools.** Open Terminal and run:
 
-   ```bash
-   cd ~/.dotfiles
-   ./install.zsh
-   ```
+```sh
+git --version
+```
 
-> **Note**: The installation process is interactive and will prompt you for:
->
-> - Computer name
-> - Which programming languages to install
-> - Whether to include pentesting tools
-> - Various other configuration options
+macOS offers to install the Command Line Tools. Click **Install** and wait for it to finish.
 
-> **Important**: After installation, you must manually set up the wallpaper system for sketchybar themes to work properly. See the [Post-Installation](#-post-installation) section for details.
+**2. Load my SSH key temporarily** (from 1Password on the iPhone):
 
-## 🎯 What Gets Installed
+1. iPhone → 1Password → SSH key → copy the **private key**.
+2. Paste it into a note in the **On My iPhone** Notes account (it never syncs to iCloud).
+   Select the whole key from `-----BEGIN` through `-----END…-----` and copy it.
+   Universal Clipboard makes it available on the Mac.
+3. On the Mac:
 
-### 🛠️ Development Tools
+```sh
+{ pbpaste; echo; } | ssh-add -t 3600 -    # loads the key into memory for 1 hour - never written to disk
+pbcopy < /dev/null                        # clears the clipboard
+```
 
-- Neovim (with LazyVim)
-- Git + GitHub CLI
-- Docker
-- VSCode
-- Language environments (Python, Ruby, Go, Rust)
-- Development utilities (cmake, gcc, etc.)
+`ssh-add` should print `Identity added: (stdin)`. The `echo` adds back the final line
+break that gets lost when copying.
 
-### 📱 Applications
+**3. Clone with the private submodule** (type `yes` to trust github.com):
 
-- 1Password
-- Ghostty
-- Firefox
-- ChatGPT
-- Raycast
-- and many more...
+```sh
+git clone --recurse-submodules git@github.com:matthewshammond/dotfiles.git ~/.dotfiles
+```
 
-### 🔒 Security Tools
+**4. Run the installer:**
 
-- GPG Suite
-- Little Snitch
-- VPN clients
-- Firewall configurations
-- Optional: Pentesting toolkit
+```sh
+cd ~/.dotfiles && ./install.zsh
+```
 
-### 💻 System Configurations
+It asks for the computer name and which languages to install (Python, Ruby, Go, Rust),
+asks you to sign in to the App Store, then runs unattended.
 
-- Custom UI/UX settings
-- Enhanced privacy controls
-- Optimized Finder preferences
-- Improved security defaults
-- Touch ID for sudo
+**5. Afterwards:**
 
-## ⚙️ Customization
+- 1Password → Settings → Developer → turn on **Use the SSH agent**. My `~/.ssh/config`
+  uses 1Password's agent from now on.
+- Remove the temporary key with `ssh-add -D`. It also expires on its own after an hour or a restart.
+- Delete the note on the iPhone.
+- Work through the to-do list the installer prints at the end.
 
-The installation process is interactive and allows you to choose:
+## 🌍 Public install (anyone)
 
-- Which programming languages to install
-- Whether to include pentesting tools
-- System name and identity
-- Various optional components
+```sh
+git clone https://github.com/matthewshammond/dotfiles.git ~/.dotfiles
+cd ~/.dotfiles && ./install.zsh
+```
 
-## 🎨 Theme & Appearance
+An `https` clone skips everything private automatically.
 
-- **Terminal**: Ghostty with PowerLevel10k prompt
-- **Color Scheme**: Custom-crafted theme with dynamic switching via sketchybar
-- **Font**: JetBrains Mono & Hack Nerd Font
-- **Icons**: Custom system icons and symbols
-- **Theme Switching**: Dynamic theme switching capabilities through sketchybar configuration
+> **Note**: Read `install.zsh` and the `Brewfile` before running this on your own Mac. The installer
+> changes a lot of system settings (Dock, Finder, hot corners, menu bar, computer name...).
 
-## ⚡ Performance Optimizations
+## ✏️ Neovim only
 
-- **Fast zsh Startup**: Optimized `.zshrc` with lazy loading using `zsh-defer`
-- **Clean Loading**: No background processes or job completion messages
-- **Progressive Enhancement**: Essential features load immediately, heavier plugins load after first prompt
-- **Language Manager Optimization**: pyenv, rbenv, and goenv only initialize when used
+For a remote server (Linux or macOS) or someone else's computer. This installs Neovim plus
+what LazyVim needs, then pulls my Neovim config from this repo:
 
-### Theme Customization
+```sh
+sudo -v
+curl -fsSL "https://gist.githubusercontent.com/matthewshammond/7febd4e8e34ba08bd255a7fc60ea076c/raw" | bash
+```
 
-This setup includes advanced theme switching capabilities through sketchybar. For detailed information about theme switching, customization options, and new features, please refer to the [sketchybar README](.config/sketchybar/README.md).
+## ⚙️ What the installer does
 
-## 🔧 Components
+In order:
 
-- `.zshrc`: Shell configuration and aliases
-- `.gitconfig`: Git preferences and aliases
-- `.config/nvim`: Neovim configuration (LazyVim)
-- `.p10k.zsh`: PowerLevel10k prompt configuration
-- `.config/ghostty`: Ghostty terminal configuration
-- `Brewfile`: Package declarations
-- `scripts/`: Installation and setup scripts
-- And much more...
+1. Checks for the Xcode Command Line Tools and Rosetta 2
+2. **My machines only:** fetches `private/`, copies its files into place, and clones the
+   repos listed in `private/repos.txt` into `~/projects`. This runs first because the
+   temporary SSH key only lasts an hour.
+3. Installs Homebrew and everything in the [`Brewfile`](Brewfile) (`brew bundle`)
+4. Links the dotfiles into `~` with GNU Stow. Existing files are moved to `~/.dotfiles-backup/` and never deleted.
+5. Imports my GPG public key, installs zsh-defer, Neovim plugins, SbarLua and fonts
+6. Configures Touch ID for sudo and the macOS defaults (Dock, Finder, screenshots, hot corners...)
+
+It's safe to re-run.
+
+## 🔁 Day-to-day
+
+```sh
+./install.zsh --link                      # re-copy private files and re-link everything (no installs)
+brew bundle --file ~/.dotfiles/Brewfile   # install anything new added to the Brewfile
+gpc                                       # list private files that changed locally
+gpc .ssh/config "Add server"              # save a private file: commit + push private, update the pointer here
+```
+
+**How private files work:** `private/` is a submodule
+([dotfiles-private](https://github.com/matthewshammond/dotfiles-private)). The installer copies
+its files into the repo root, where `.gitignore` keeps them out of the public repo, and Stow
+links them into `~`. Editing `~/.ssh/config` edits that copy, so run `gpc <file> "<message>"`
+to save the change back to `private`.
+
+**Adding software:** use Homebrew if it's there, then the Mac App Store (`mas` lines in the
+Brewfile), and only download from the developer's website as a last resort (list below).
+
+## 📥 Apps installed by hand
+
+These aren't on Homebrew or the App Store:
+
+- **Rex**: terminal (beta)
+- **IPMIView**: Supermicro server management
+- **NotchNook**: notch utility (dropped from Homebrew)
+
+## 📁 Layout
+
+| Path | What it is |
+| --- | --- |
+| `install.zsh` | Main installer (`--link` to only re-link) |
+| `Brewfile` | Every Homebrew formula, cask and App Store app |
+| `scripts/brew.zsh` | Installs Homebrew, runs `brew bundle`, sets up language versions |
+| `.zshrc`, `aliases.zsh`, `.p10k.zsh` | Shell: zsh + Powerlevel10k, lazy-loaded plugins, aliases and functions |
+| `.config/rex` | Rex terminal |
+| `.config/ghostty` | Ghostty, kept as a quick drop-down terminal |
+| `.config/nvim` | Neovim (LazyVim) |
+| `.config/sketchybar` | Status bar and the theme switcher ([README](.config/sketchybar/README.md)) |
+| `.config/yabai`, `.config/skhd` | Tiling window manager and hotkeys |
+| `.config/karabiner` | Keyboard remapping |
+| `.config/atuin` | Shell history sync |
+| `.config/herdr` | herdr config (kept for reference; not installed) |
+| `.claude` | Claude Code settings and status line |
+| `private/` | Private submodule: SSH/Git/GPG config, Raycast export, `repos.txt` (my machines only) |
 
 ## 📋 Post-Installation
 
-After running the installation script, a few manual steps are required:
+### 🖼️ Wallpaper setup for sketchybar themes
 
-1. Sign in to your Apple ID
-2. Configure application-specific settings
-3. Set up security features (FileVault, Firewall)
-4. Import GPG keys and configure SSH
-5. **Set up wallpaper system for sketchybar themes** (see below)
-6. Review the full checklist in the installation output
+Sketchybar changes the wallpaper along with the theme, but macOS has to initialize its
+wallpaper system first:
 
-### 🖼️ Wallpaper Setup for sketchybar Themes
-
-**Important**: For sketchybar theme switching to work properly with wallpaper changes, you must manually set up the wallpaper system first:
-
-1. **Go to System Settings > Wallpaper**
+1. **System Settings → Wallpaper**
 2. **Change the wallpaper to ANY image** (not the default macOS wallpaper)
 3. **Make sure "Show on all Spaces" is enabled**
-4. **Apply the changes**
-
-This step is crucial because macOS needs to initialize its wallpaper management system before sketchybar can programmatically change wallpapers. Without this setup, theme switching will work but wallpapers won't change.
 
 > **Note**: Simply enabling/disabling "Show on all Spaces" on the default wallpaper is not sufficient. You must actually change the wallpaper to a different image first.
 
-### 📝 Neovim Setup for Theme Switching
+### ⌨️ Permissions
 
-**Important**: For sketchybar theme switching to work with Neovim themes, you must initialize Neovim first:
-
-1. **Open Neovim** (`nvim` in terminal or launch the app)
-2. **Wait for LazyVim to install all plugins** (this may take a few minutes)
-3. **Quit Neovim** (`:q` or `Cmd+Q`)
-
-This step is required because LazyVim needs to install and configure all plugins before the theme system can properly switch Neovim themes when you change sketchybar themes.
-
-## 🤝 Contributing
-
-Feel free to fork this repository and customize it for your needs. If you have suggestions or improvements, pull requests are welcome!
+yabai, skhd, sketchybar and Karabiner-Elements need Accessibility (and some need Screen
+Recording) permissions. macOS prompts for them on first launch. Confirm that 8 Spaces exist.
+yabai creates them once its scripting addition loads.
 
 ## 📜 License
 
@@ -168,8 +182,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [Homebrew](https://brew.sh/) - The missing package manager for macOS
 - [LazyVim](https://github.com/LazyVim/LazyVim) - Neovim configuration
-- [PowerLevel10k](https://github.com/romkatv/powerlevel10k) - Cross-shell prompt
-- [Ghostty](https://github.com/mitchellh/ghostty) - Modern terminal emulator
+- [PowerLevel10k](https://github.com/romkatv/powerlevel10k) - zsh prompt
+- [SketchyBar](https://github.com/FelixKratz/SketchyBar) and [yabai](https://github.com/asmvik/yabai)
 - And all the amazing open-source projects that make this possible!
 
 ---
