@@ -3,8 +3,8 @@
 ###############################################################################
 # Homebrew Installation Script                                                #
 # Installs Homebrew, everything in ~/.dotfiles/Brewfile, and language         #
-# versions. Sourced by install.zsh, which sets INSTALL_PYTHON/RUBY/GO/RUST.  #
-# Can also be run on its own:  INSTALL_PYTHON=y zsh scripts/brew.zsh          #
+# a base Python. Sourced by install.zsh; can also run on its own:           #
+#   zsh ~/.dotfiles/scripts/brew.zsh                                          #
 ###############################################################################
 
 # print_* helpers come from install.zsh; define fallbacks for standalone runs
@@ -64,46 +64,17 @@ else
 fi
 
 ###############################################################################
-# Language versions (only when chosen in install.zsh)                         #
+# Python - pyenv provides the interpreter that virtualenvs are built from.    #
+# Nothing is pip-installed globally; projects use pyenv-virtualenv venvs.    #
 ###############################################################################
 
-if [[ $INSTALL_PYTHON == y ]]; then
-  print_step "Setting up Python 3.14 via pyenv..."
-  export PYENV_ROOT="$HOME/.pyenv"
-  eval "$(pyenv init -)"
-  pyenv versions --bare | grep -q '^3\.14' || pyenv install 3.14
-  pyenv global 3.14
-  pyenv rehash
-  pip install --upgrade pip
-  pip install ntfy
-  print_success "Python ready"
-fi
-
-if [[ $INSTALL_GO == y ]]; then
-  print_step "Setting up Go 1.25.4 via goenv..."
-  export GOENV_ROOT="$HOME/.goenv"
-  eval "$(goenv init -)"
-  goenv versions --bare | grep -q '^1\.25\.4$' || goenv install 1.25.4
-  goenv global 1.25.4
-  print_success "Go ready"
-fi
-
-if [[ $INSTALL_RUBY == y ]]; then
-  print_step "Setting up Ruby 3.4.7 via rbenv..."
-  eval "$(rbenv init -)"
-  rbenv versions --bare | grep -q '^3\.4\.7$' || rbenv install 3.4.7
-  rbenv global 3.4.7
-  gem list -i rails >/dev/null || gem install rails
-  gem list -i bundler >/dev/null || gem install bundler
-  print_success "Ruby ready"
-fi
-
-if [[ $INSTALL_RUST == y ]]; then
-  print_step "Setting up Rust via rustup..."
-  command -v rustc >/dev/null || rustup-init -y --no-modify-path
-  "$HOME/.cargo/bin/rustup" default stable
-  print_success "Rust ready"
-fi
+python_version=3.14
+print_step "Installing Python $python_version via pyenv (base for virtualenvs)..."
+export PYENV_ROOT="$HOME/.pyenv"
+eval "$(pyenv init -)"
+pyenv versions --bare | grep -q "^${python_version//./\\.}" || pyenv install "$python_version"
+pyenv global "$(pyenv versions --bare | grep "^${python_version//./\\.}" | grep -v / | tail -1)"
+print_success "Python $(pyenv version-name) ready - create venvs with: pyenv virtualenv $python_version <name>"
 
 ###############################################################################
 # Services                                                                    #

@@ -62,8 +62,7 @@ git clone --recurse-submodules git@github.com:matthewshammond/dotfiles.git ~/.do
 cd ~/.dotfiles && ./install.zsh
 ```
 
-It asks for the computer name and which languages to install (Python, Ruby, Go, Rust),
-asks you to sign in to the App Store, then runs unattended.
+It asks for the computer name, asks you to sign in to the App Store, then runs unattended.
 
 **5. Afterwards:**
 
@@ -105,7 +104,8 @@ In order:
    temporary SSH key only lasts an hour.
 3. Installs Homebrew and everything in the [`Brewfile`](Brewfile) (`brew bundle`)
 4. Links the dotfiles into `~` with GNU Stow. Existing files are moved to `~/.dotfiles-backup/` and never deleted.
-5. Imports my GPG public key, installs zsh-defer, Neovim plugins, SbarLua and fonts
+5. Installs a base Python with pyenv (projects use pyenv-virtualenv venvs; nothing is pip-installed
+   globally), imports my GPG public key, installs zsh-defer, Neovim plugins, SbarLua and fonts
 6. Configures Touch ID for sudo, turns off Siri and the Spotlight shortcut (Raycast takes Cmd+Space),
    and sets the macOS defaults (Dock, Finder, screenshots, hot corners...)
 7. Offers to open the Raycast settings import
@@ -137,9 +137,9 @@ Brewfile), and only download from the developer's website as a last resort (list
 
 These aren't on Homebrew or the App Store:
 
-- **Rex**: terminal (beta)
+- **Rex**: terminal (beta, moving to Homebrew after the beta)
 - **IPMIView**: Supermicro server management
-- **NotchNook**: notch utility (dropped from Homebrew)
+- **Parallels Toolbox**: comes with Parallels
 
 ## 📁 Layout
 

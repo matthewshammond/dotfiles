@@ -8,33 +8,18 @@ fi
 # Cache brew prefix to avoid multiple slow calls
 export HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-$(brew --prefix 2>/dev/null || echo /opt/homebrew)}"
 
-# Language manager roots (shims lazy-loaded below)
+# Python: pyenv shims on PATH so python/pip resolve to the pyenv version or
+# active virtualenv; the full pyenv init is lazy-loaded below
 export PYENV_ROOT="$HOME/.pyenv"
-export RBENV_ROOT="$HOME/.rbenv"
-export GOENV_ROOT="$HOME/.goenv"
-export CARGO_ROOT="$HOME/.cargo"
-export PIPX_ROOT="$HOME/.local"
 
-export PATH="$PYENV_ROOT/bin:$RBENV_ROOT/bin:$GOENV_ROOT/bin:$CARGO_ROOT/bin:$PIPX_ROOT/bin:$HOMEBREW_PREFIX/sbin:$HOME/.dotfiles/scripts:$PATH"
+export PATH="$PYENV_ROOT/shims:$PYENV_ROOT/bin:$HOME/.local/bin:$HOMEBREW_PREFIX/sbin:$HOME/.dotfiles/scripts:$PATH"
 
-# Lazy-load language managers
+# Lazy-load pyenv (needed for 'pyenv activate' / virtualenvs)
 pyenv() {
   unset -f pyenv
   eval "$(command pyenv init -)"
   eval "$(command pyenv virtualenv-init -)"
   pyenv "$@"
-}
-
-rbenv() {
-  unset -f rbenv
-  eval "$(command rbenv init -)"
-  rbenv "$@"
-}
-
-goenv() {
-  unset -f goenv
-  eval "$(command goenv init -)"
-  goenv "$@"
 }
 
 # fzf: env + custom generators (must exist before completion.zsh is sourced)
