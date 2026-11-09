@@ -106,9 +106,14 @@ In order:
 3. Installs Homebrew and everything in the [`Brewfile`](Brewfile) (`brew bundle`)
 4. Links the dotfiles into `~` with GNU Stow. Existing files are moved to `~/.dotfiles-backup/` and never deleted.
 5. Imports my GPG public key, installs zsh-defer, Neovim plugins, SbarLua and fonts
-6. Configures Touch ID for sudo and the macOS defaults (Dock, Finder, screenshots, hot corners...)
+6. Configures Touch ID for sudo, turns off Siri and the Spotlight shortcut (Raycast takes Cmd+Space),
+   and sets the macOS defaults (Dock, Finder, screenshots, hot corners...)
+7. Offers to open the Raycast settings import
 
-It's safe to re-run.
+It's safe to re-run. It ends with a summary listing anything that failed (missing packages,
+repos that didn't clone...), or the step where it stopped.
+
+To only re-link dotfiles (no installs, no system changes), run `./install.zsh --link`.
 
 ## 🔁 Day-to-day
 
