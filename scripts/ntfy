@@ -1,0 +1,71 @@
+#!/usr/bin/env zsh
+#
+# ntfy - send a Pushover notification
+#
+# Drop-in replacement for the old Python `ntfy` (dschep/ntfy, unmaintained),
+# supporting the way my scripts call it:
+#
+#   ntfy send "message"
+#   ntfy -t "title" send "message"
+#
+# Settings come from ~/.ntfy.yml (private, never in this public repo):
+#
+#   title: default title
+#   pushover:
+#     user_key: <your Pushover user key>
+#     device: <optional device name>
+#     api_token: <optional; your own Pushover application token>
+#
+# Without api_token it uses the application token the original ntfy shipped
+# with (public in its source), so the existing ntfy setup keeps working.
+
+set -e
+
+config="${NTFY_CONFIG:-$HOME/.ntfy.yml}"
+default_token="aUnsraBiEZVsmrG89AZp47K3S2dX2a"
+
+usage() { print -u2 "usage: ntfy [-t title] send <message>"; exit 2 }
+
+# Read a "key: value" line from the config (top-level, or nested under pushover:)
+config_value() {
+  [[ -r $config ]] || return 0
+  sed -n "s/^[[:space:]]*$1:[[:space:]]*//p" "$config" | head -1 | sed 's/^["'\'']//; s/["'\'']$//'
+}
+
+title=""
+while (( $# )); do
+  case $1 in
+    -t|--title) title=$2; shift 2 ;;
+    -b|--backend) shift 2 ;;          # accepted for compatibility; always Pushover
+    send) shift; break ;;
+    -h|--help) usage ;;
+    *) usage ;;
+  esac
+done
+message="$*"
+[[ -n $message ]] || usage
+
+user_key=$(config_value user_key)
+device=$(config_value device)
+api_token=$(config_value api_token)
+[[ -n $title ]] || title=$(config_value title)
+[[ -n $title ]] || title=$(hostname -s)
+
+if [[ -z $user_key ]]; then
+  print -u2 "ntfy: no pushover user_key in $config"
+  exit 1
+fi
+
+args=(
+  --form-string "token=${api_token:-$default_token}"
+  --form-string "user=$user_key"
+  --form-string "title=$title"
+  --form-string "message=$message"
+)
+[[ -n $device ]] && args+=(--form-string "device=$device")
+
+response=$(curl -sS --max-time 20 "${args[@]}" https://api.pushover.net/1/messages.json)
+if [[ $response != *'"status":1'* ]]; then
+  print -u2 "ntfy: Pushover rejected the message: $response"
+  exit 1
+fi

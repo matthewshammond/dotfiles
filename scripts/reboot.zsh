@@ -8,9 +8,10 @@ exec 1> >(tee $HOME/logs/reboot.log) 2>&1
 # write time server started reboot to logs
 echo "$(hostname) reboot started at $(date +%Y/%m/%d-%H:%M:%S)"
 
-# wait for vpn to connect before continuing
-while [ $(piactl get connectionstate) = "Disconnected" ]; do
-      piactl connect;
+# wait (up to 5 minutes) for the network so the notification can go out
+for _ in {1..60}; do
+  curl -s --max-time 5 -o /dev/null https://api.pushover.net && break
+  sleep 5
 done
 
 # create header and body for email
