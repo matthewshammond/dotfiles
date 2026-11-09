@@ -7,7 +7,7 @@
 \.gnupg/pub.asc
 \.stow-local-ignore
 aliases.zsh
-hosts*
+hosts\..*
 install.zsh
 LICENSE
 plist
