@@ -12,7 +12,7 @@
     <key>EnvironmentVariables</key>
     <dict>
       <key>PATH</key>
-      <string><![CDATA[/Users/matthammond/.pyenv/shims:/Users/matthammond/.dotfiles/scripts:/opt/homebrew/opt/fzf/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/MacGPG2/bin:/Applications/Wireshark.app/Contents/MacOS]]></string>
+      <string>/Users/matthammond/.dotfiles/scripts:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     </dict>
 
     <key>WorkingDirectory</key>
