@@ -56,6 +56,10 @@ print_summary() {
     printf "${YELLOW}│ ⚠️  %-2d thing(s) need attention                               │${NC}\n" ${#failures}
     printf "${YELLOW}╰──────────────────────────────────────────────────────────────╯${NC}\n"
     local f; for f in $failures; do printf "${YELLOW}  • %s${NC}\n" "$f"; done
+    if (( ${failures[(I)Homebrew:*]} )); then
+      printf "${YELLOW}  → After fixing (e.g. signing in to the App Store), install just the missing\n"
+      printf "    packages with:  brew bundle --file ~/.dotfiles/Brewfile${NC}\n"
+    fi
   elif (( exit_code == 0 )); then
     printf "${GREEN}╭──────────────────────────────────────────────────────────────╮${NC}\n"
     printf "${GREEN}│ ✓ Everything installed with no failures                      │${NC}\n"
@@ -528,6 +532,26 @@ killall Dock Finder 2>/dev/null || true
 # Final Steps & Manual To-Do List                                             #
 ###############################################################################
 
+# yabai's scripting addition (moving/creating spaces, etc.) needs SIP partially
+# disabled. That can only be done from Recovery, so check and explain.
+step "Checking yabai requirements (SIP)"
+sip=$(csrutil status 2>/dev/null)
+sip_ready=false
+if [[ $sip == *"status: disabled"* || ($sip == *"Filesystem Protections: disabled"* && $sip == *"Debugging Restrictions: disabled"* && $sip == *"NVRAM Protections: disabled"*) ]]; then
+  sip_ready=true
+  print_success "SIP is relaxed enough for yabai"
+  if [[ $(uname -m) == arm64 ]] && ! nvram boot-args 2>/dev/null | grep -q arm64e_preview_abi; then
+    if sudo nvram boot-args=-arm64e_preview_abi; then
+      print_success "Set boot-args for yabai - takes effect after a restart"
+    else
+      fail "Couldn't set yabai's boot-args: run  sudo nvram boot-args=-arm64e_preview_abi  then restart"
+    fi
+  fi
+else
+  print_info "SIP is on (recommended). yabai tiles normally; only creating spaces and"
+  print_info "window layering need SIP relaxed - see 'yabai and SIP (optional)' in the README"
+fi
+
 print_header "Final Steps & Manual To-Do List ${STAR}"
 
 print_info "The following items need to be completed manually:"
@@ -542,7 +566,7 @@ echo "  ${ARROW} Sign in to Apple ID / iCloud services"
 echo "  ${ARROW} Configure Time Machine backup"
 echo "  ${ARROW} Set up Touch ID fingerprints"
 echo "  ${ARROW} Grant Accessibility / Screen Recording to yabai, skhd, sketchybar, Karabiner"
-echo "  ${ARROW} Confirm 8 Spaces/Desktops exist (yabai creates them when its scripting addition loads; otherwise Control + Up Arrow to add)"
+echo "  ${ARROW} Create 8 Desktops: Control + Up Arrow, then click + until there are 8"
 echo "  ${ARROW} Enable FileVault and the firewall"
 
 print_step "Applications:"

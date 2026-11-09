@@ -180,11 +180,23 @@ wallpaper system first:
 
 > **Note**: Simply enabling/disabling "Show on all Spaces" on the default wallpaper is not sufficient. You must actually change the wallpaper to a different image first.
 
+### 🪟 yabai and SIP (optional)
+
+SIP stays **on**. yabai tiles windows normally without changes; create the 8 desktops once with
+Control + Up Arrow → **+**. Only a few yabai extras (creating/destroying spaces from scripts,
+window layering, transparency) need SIP partially disabled. If ever needed:
+
+1. Shut down, then hold the power button until **Loading startup options** appears
+2. **Options → Continue**, then in the menu bar **Utilities → Terminal**:
+   ```sh
+   csrutil enable --without fs --without debug --without nvram
+   ```
+3. Restart, then run `sudo nvram boot-args=-arm64e_preview_abi` (or re-run `./install.zsh`) and restart again
+
 ### ⌨️ Permissions
 
 yabai, skhd, sketchybar and Karabiner-Elements need Accessibility (and some need Screen
-Recording) permissions. macOS prompts for them on first launch. Confirm that 8 Spaces exist.
-yabai creates them once its scripting addition loads.
+Recording) permissions. macOS prompts for them on first launch.
 
 ## 📜 License
 
