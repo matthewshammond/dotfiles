@@ -36,6 +36,33 @@ print_warning() { printf "${YELLOW}${WARN} %s${NC}\n" "$1" }
 print_error()   { printf "${RED}${WARN} %s${NC}\n" "$1" }
 print_info()    { printf "${PURPLE}${INFO} %s${NC}\n" "$1" }
 
+# Everything that goes wrong is collected here and shown in a summary at the end
+failures=()
+fail() { print_error "$1"; failures+=("$1") }
+current_step="starting"
+step() { current_step="$1"; print_header "$1" }
+
+print_summary() {
+  local exit_code=$1
+  echo
+  if (( exit_code != 0 )); then
+    printf "${RED}╭──────────────────────────────────────────────────────────────╮${NC}\n"
+    printf "${RED}│ ✗ Install stopped during: %-35s│${NC}\n" "$current_step"
+    printf "${RED}╰──────────────────────────────────────────────────────────────╯${NC}\n"
+    print_info "Fix the error above, then re-run ./install.zsh (it's safe to re-run)"
+  fi
+  if (( ${#failures} )); then
+    printf "${YELLOW}╭──────────────────────────────────────────────────────────────╮${NC}\n"
+    printf "${YELLOW}│ ⚠️  %-2d thing(s) need attention                               │${NC}\n" ${#failures}
+    printf "${YELLOW}╰──────────────────────────────────────────────────────────────╯${NC}\n"
+    local f; for f in $failures; do printf "${YELLOW}  • %s${NC}\n" "$f"; done
+  elif (( exit_code == 0 )); then
+    printf "${GREEN}╭──────────────────────────────────────────────────────────────╮${NC}\n"
+    printf "${GREEN}│ ✓ Everything installed with no failures                      │${NC}\n"
+    printf "${GREEN}╰──────────────────────────────────────────────────────────────╯${NC}\n"
+  fi
+}
+
 ask() { # ask <var> <question> <default y|n>
   local reply
   read "reply?$(printf "${CYAN}${GEAR} %s (y/n) [%s]: ${NC}" "$2" "$3")"
@@ -49,6 +76,7 @@ export dotfiledir
 
 mode=full
 [[ $1 == --link ]] && mode=link
+trap 'print_summary $?' EXIT
 
 timestamp=$(date +%Y%m%d-%H%M%S)
 backupdir="$HOME/.dotfiles-backup/$timestamp"
@@ -76,7 +104,7 @@ use_bootstrap_agent() {
 private_items=(.gitconfig .ntfy.yml .ssh .gnupg .config/asciinema .config/gh)
 
 setup_private() {
-  print_header "Private files"
+  step "Private files"
   if ! is_private_clone; then
     print_info "Public clone (https) - skipping private files"
     return 0
@@ -102,7 +130,7 @@ setup_private() {
         cp -p "$src" "$dst"
         print_success "Copied private file: $f"
       elif ! cmp -s "$src" "$dst"; then
-        print_warning "$f differs from private copy - kept the local one (save it with: gpc $f \"msg\")"
+        fail "$f differs from private copy - kept the local one (save it with: gpc $f \"msg\")"
       fi
     done
   done
@@ -113,7 +141,7 @@ setup_private() {
 ###############################################################################
 
 link_dotfiles() {
-  print_header "Linking dotfiles"
+  step "Linking dotfiles"
 
   # These must be real directories. If they don't exist, stow would turn the
   # whole directory into a symlink into this repo, and everything apps write
@@ -124,12 +152,23 @@ link_dotfiles() {
 
   local stow=(/opt/homebrew/bin/stow --dir="$dotfiledir" --target="$HOME")
 
-  # Move anything stow would refuse to replace into a backup folder (never rm -rf)
-  local target
-  for target in ${(f)"$($stow -n --restow . 2>&1 | sed -n 's/.* over existing target \(.*\) since .*/\1/p')"}; do
-    mkdir -p "$backupdir/${target:h}"
-    mv "$HOME/$target" "$backupdir/$target"
-    print_info "Backed up existing ~/$target to $backupdir"
+  # Clear anything stow would refuse to replace. Two kinds of conflict:
+  #  - "over existing target X since..."      a real file -> move it to the backup folder
+  #  - "existing target is not owned by stow: X"  usually an old hand-made symlink into
+  #    this repo -> just remove the link (stow recreates it); anything else is backed up
+  local target conflicts
+  conflicts=$($stow -n --restow . 2>&1 || true)
+  for target in ${(f)"$(print -r -- "$conflicts" | sed -n \
+      -e 's/.* over existing target \(.*\) since .*/\1/p' \
+      -e 's/.*existing target is not owned by stow: \(.*\)$/\1/p')"}; do
+    local p="$HOME/$target"
+    if [[ -L $p && ${p:A} == $dotfiledir/* ]]; then
+      rm "$p"
+    else
+      mkdir -p "$backupdir/${target:h}"
+      mv "$HOME/$target" "$backupdir/$target"
+      print_info "Backed up existing ~/$target to $backupdir"
+    fi
   done
 
   print_step "Running stow..."
@@ -160,7 +199,7 @@ SUDO_KEEPALIVE_PID=$!
 # Prevent system sleep during install
 /usr/bin/caffeinate -d &
 CAFFEINATE_PID=$!
-trap 'kill $CAFFEINATE_PID $SUDO_KEEPALIVE_PID 2>/dev/null' EXIT
+trap 'kill $CAFFEINATE_PID $SUDO_KEEPALIVE_PID 2>/dev/null; print_summary $?' EXIT
 
 # Logging
 mkdir -p "$HOME/logs"
@@ -211,7 +250,7 @@ setup_private
 clone_projects() {
   local list="$dotfiledir/private/repos.txt"
   [[ -f $list ]] || return 0
-  print_header "Cloning projects into ~/projects"
+  step "Cloning projects into ~/projects"
   use_bootstrap_agent
   mkdir -p ~/projects
   local repo folder rest
@@ -223,7 +262,7 @@ clone_projects() {
     elif git clone -q "git@github.com:matthewshammond/$repo.git" ~/projects/$folder; then
       print_success "Cloned $repo -> ~/projects/$folder"
     else
-      print_warning "Failed to clone $repo (re-run install later, or clone it by hand)"
+      fail "Couldn't clone $repo into ~/projects/$folder"
     fi
   done < "$list"
 }
@@ -233,13 +272,14 @@ is_private_clone && clone_projects
 # Software                                                                    #
 ###############################################################################
 
+current_step="Installing software (Homebrew)"
 source "$dotfiledir/scripts/brew.zsh"
 
 link_dotfiles
 
 # GPG public key (private keys live on the YubiKey)
 if is_private_clone && [[ -f $dotfiledir/.gnupg/pub.asc ]]; then
-  print_header "Setting up GPG"
+  step "Setting up GPG"
   /opt/homebrew/bin/gpg --import "$dotfiledir/.gnupg/pub.asc"
   print_success "GPG public key imported"
 fi
@@ -252,12 +292,12 @@ fi
 print_success "zsh-defer installed"
 
 # Neovim: install LazyVim plugins now so theme switching works on first use
-print_header "Setting up Neovim"
-nvim --headless "+Lazy! sync" +qa || print_warning "Neovim plugin install had errors - open nvim to retry"
+step "Setting up Neovim"
+nvim --headless "+Lazy! sync" +qa || fail "Neovim plugin install had errors - open nvim to retry"
 print_success "Neovim plugins installed"
 
 # Sketchybar: SbarLua + Simon Symbol font
-print_header "Setting up Sketchybar"
+step "Setting up Sketchybar"
 rm -rf /tmp/SbarLua
 git clone -q https://github.com/FelixKratz/SbarLua.git /tmp/SbarLua
 (cd /tmp/SbarLua && make install)
@@ -274,17 +314,30 @@ cp -R "$dotfiledir/.config/Übersicht/widgets/flip-clock.widget" "$widgets/"
 print_success "Übersicht flip-clock widget installed"
 
 # Touch ID for sudo (sudo_local survives macOS updates; /etc/pam.d/sudo doesn't)
-print_header "Configuring Security"
+step "Configuring Security"
 if ! grep -qs pam_tid /etc/pam.d/sudo_local; then
   echo "auth       sufficient     pam_tid.so" | sudo tee -a /etc/pam.d/sudo_local >/dev/null
 fi
 print_success "Touch ID configured for sudo"
 
+# yabai's scripting addition is loaded with 'sudo yabai --load-sa' from yabairc,
+# so allow exactly this yabai binary to do that without a password
+# (update_yabai in aliases.zsh refreshes the hash after upgrades)
+yabai_bin=$(command -v yabai || true)
+if [[ -n $yabai_bin ]]; then
+  echo "$(whoami) ALL=(root) NOPASSWD: sha256:$(shasum -a 256 "$yabai_bin" | cut -d ' ' -f 1) $yabai_bin --load-sa" \
+    | sudo tee /private/etc/sudoers.d/yabai >/dev/null
+  sudo visudo -cf /private/etc/sudoers.d/yabai >/dev/null || { sudo rm -f /private/etc/sudoers.d/yabai; fail "yabai sudoers entry was invalid and was removed"; }
+  print_success "yabai can load its scripting addition"
+else
+  fail "yabai not installed - skipped its sudoers entry"
+fi
+
 ###############################################################################
 # System Preferences                                                          #
 ###############################################################################
 
-print_header "Configuring System Preferences"
+step "Configuring System Preferences"
 
 # Cmd+1..8 switches to Desktop 1..8 (sketchybar space clicks send these keys)
 print_step "Setting Cmd+1..8 to switch desktops..."
@@ -300,7 +353,7 @@ print_success "Cmd+1..8 desktop shortcuts set"
 # General UI/UX                                                               #
 ###############################################################################
 
-print_header "Configuring General UI/UX Settings"
+step "Configuring General UI/UX Settings"
 
 print_step "Setting computer name..."
 sudo scutil --set ComputerName "$name"
@@ -326,6 +379,22 @@ defaults write com.apple.CrashReporter DialogType -string "none"
 print_step "Customizing login window..."
 sudo defaults write /Library/Preferences/com.apple.loginwindow AdminHostInfo HostName
 
+print_step "Turning off Siri..."
+defaults write com.apple.assistant.support "Assistant Enabled" -bool false
+defaults write com.apple.Siri StatusMenuVisible -bool false
+defaults write com.apple.Siri VoiceTriggerUserEnabled -bool false
+defaults write com.apple.Siri UserHasDeclinedEnable -bool true
+
+# Spotlight: free up Cmd+Space (Raycast) and Opt+Cmd+Space, hide the menu bar icon.
+# Indexing stays ON - Raycast file search, Mail and Finder search depend on it.
+print_step "Turning off Spotlight shortcuts..."
+for hotkey in 64 65; do
+  defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add $hotkey \
+    "<dict><key>enabled</key><false/><key>value</key><dict><key>parameters</key><array><integer>65535</integer><integer>49</integer><integer>$(( hotkey == 64 ? 1048576 : 1572864 ))</integer></array><key>type</key><string>standard</string></dict></dict>"
+done
+defaults -currentHost write com.apple.Spotlight MenuItemHidden -int 1
+/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
+
 print_step "Setting time format..."
 defaults write com.apple.menuextra.clock DateFormat -string 'EEE MMM d  H:mm'
 print_success "General UI/UX configured"
@@ -334,7 +403,7 @@ print_success "General UI/UX configured"
 # Screen                                                                      #
 ###############################################################################
 
-print_header "Configuring Screen Settings"
+step "Configuring Screen Settings"
 
 defaults write com.apple.screensaver askForPassword -int 1
 defaults write com.apple.screensaver askForPasswordDelay -int 0
@@ -350,7 +419,7 @@ print_success "Screenshots configured: JPG format, no shadow, saved to Downloads
 # Finder                                                                      #
 ###############################################################################
 
-print_header "Configuring Finder Settings"
+step "Configuring Finder Settings"
 
 defaults write com.apple.finder NewWindowTarget -string "PfLo"
 defaults write com.apple.finder NewWindowTargetPath -string "file://$HOME/Documents/"
@@ -369,7 +438,7 @@ print_success "Finder configured"
 # Dock & Menu Bar                                                             #
 ###############################################################################
 
-print_header "Configuring Dock and Menu Bar"
+step "Configuring Dock and Menu Bar"
 
 print_step "Configuring Dock..."
 defaults write com.apple.dock autohide -bool true
@@ -421,7 +490,6 @@ dock_apps=(
   "/System/Applications/Calendar.app"
   "/System/Applications/Messages.app"
   "/Applications/Microsoft Teams.app"
-  "/Applications/Discord.app"
   "/Applications/Signal.app"
   "/Applications/Safari.app"
   "/System/Applications/Notes.app"
@@ -433,7 +501,7 @@ for app in $dock_apps; do
   if [[ -d $app ]]; then
     persistent_apps+=("$(dock_item "file://${app// /%20}/")")
   else
-    print_warning "Not in Dock (not installed): ${app:t}"
+    fail "Not added to the Dock (not installed): ${app:t}"
   fi
 done
 defaults write com.apple.dock persistent-apps -array $persistent_apps
@@ -473,7 +541,6 @@ echo "  ${ARROW} Enable FileVault and the firewall"
 
 print_step "Applications:"
 echo "  ${ARROW} Sign in to 1Password, browsers, Teams, Outlook"
-echo "  ${ARROW} Raycast: import settings with  open ~/.dotfiles/private/Raycast.rayconfig"
 echo "  ${ARROW} Set up Little Snitch rules"
 echo "  ${ARROW} Install apps not in Homebrew or the App Store (see README)"
 
@@ -482,10 +549,22 @@ echo "  ${ARROW} System Settings > Wallpaper: change to ANY image (not the macOS
 echo "  ${ARROW} Enable 'Show on all Spaces'"
 echo "  ${WARN} Required once for sketchybar theme switching to change wallpapers"
 
+# Raycast: opening a .rayconfig file starts Raycast's own import (it asks for
+# the export password). There's no way to import silently.
+rayconfig="$dotfiledir/private/Raycast.rayconfig"
+if [[ -f $rayconfig ]]; then
+  ask import_raycast "Import Raycast settings now? (finish Raycast's welcome screens first)" y
+  if [[ $import_raycast == y ]]; then
+    open -a Raycast "$rayconfig" || fail "Couldn't open the Raycast import - run: open ~/.dotfiles/private/Raycast.rayconfig"
+  else
+    print_info "Later: open ~/.dotfiles/private/Raycast.rayconfig"
+  fi
+fi
+
 if [[ -d $backupdir ]]; then
   print_warning "Files replaced by symlinks were backed up to $backupdir"
 fi
 
 print_header "Installation Complete! 🎉"
-print_success "Your development environment has been set up successfully"
-print_info "Please review the manual steps above to complete the configuration"
+print_info "Review the manual steps above - the summary below lists anything that failed"
+current_step="done"
