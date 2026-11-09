@@ -232,6 +232,27 @@ while true; do
 done
 
 
+# Desktops: yabai's rules send apps to desktops 1-8, and sketchybar shows 8
+# spaces. Creating them needs SIP relaxed for yabai, so do it by hand, first.
+desktop_count() {
+  local i=0 n max=0
+  while n=$(defaults export com.apple.spaces - 2>/dev/null |
+            plutil -extract "SpacesDisplayConfiguration.Management Data.Monitors.$i.Spaces" raw - 2>/dev/null); do
+    (( n > max )) && max=$n
+    (( i++ ))
+  done
+  echo $max
+}
+step "Desktops"
+if (( $(desktop_count) < 8 )); then
+  print_info "Mission Control is opening: click + (top right) until there are 8 desktops."
+  open -a "Mission Control"
+  until (( $(desktop_count) >= 8 )); do
+    read "?$(printf "${CYAN}${GEAR} Press Enter once there are 8 desktops (found $(desktop_count))... ${NC}")"
+  done
+fi
+print_success "8 desktops ready"
+
 ###############################################################################
 # Private files and projects first - they need the bootstrap SSH key, which   #
 # only lasts an hour, and the Homebrew step can take longer than that         #
@@ -566,7 +587,6 @@ echo "  ${ARROW} Sign in to Apple ID / iCloud services"
 echo "  ${ARROW} Configure Time Machine backup"
 echo "  ${ARROW} Set up Touch ID fingerprints"
 echo "  ${ARROW} Grant Accessibility / Screen Recording to yabai, skhd, sketchybar, Karabiner"
-echo "  ${ARROW} Create 8 Desktops: Control + Up Arrow, then click + until there are 8"
 echo "  ${ARROW} Enable FileVault and the firewall"
 
 print_step "Applications:"
