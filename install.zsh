@@ -540,6 +540,7 @@ echo "  ${ARROW} Enable FileVault and the firewall"
 
 print_step "Applications:"
 echo "  ${ARROW} Sign in to 1Password, browsers, Teams, Outlook"
+echo "  ${ARROW} GitHub CLI: gh auth login --git-protocol ssh --web  (token goes in the Keychain)"
 echo "  ${ARROW} Set up Little Snitch rules"
 echo "  ${ARROW} Install apps not in Homebrew or the App Store (see README)"
 
