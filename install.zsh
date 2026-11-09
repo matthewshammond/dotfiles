@@ -269,6 +269,18 @@ if is_private_clone && [[ -f $dotfiledir/private/.gnupg/pub.asc ]]; then
   print_success "GPG public key imported"
 fi
 
+# launchd jobs. Plists are written for /Users/matthammond; adjust to this $HOME.
+# They start at the next login/boot (loading them now would fire the reboot
+# notification in the middle of the install).
+step "Background jobs (launchd)"
+mkdir -p ~/Library/LaunchAgents
+sed "s|/Users/matthammond|$HOME|g" "$dotfiledir/plist/local.reboot.plist" > ~/Library/LaunchAgents/local.reboot.plist
+print_success "Reboot notification (Pushover) runs at each login"
+sed "s|/Users/matthammond|$HOME|g" "$dotfiledir/plist/local.cups.plist" | sudo tee /Library/LaunchDaemons/local.cups.plist >/dev/null
+sudo chown root:wheel /Library/LaunchDaemons/local.cups.plist
+sudo chmod 644 /Library/LaunchDaemons/local.cups.plist
+print_success "CUPS job history disabled at each boot"
+
 # zsh-defer for lazy loading
 if [[ ! -d ~/.zsh-defer ]]; then
   print_step "Installing zsh-defer..."

@@ -99,16 +99,19 @@ curl -fsSL "https://gist.githubusercontent.com/matthewshammond/7febd4e8e34ba08bd
 In order:
 
 1. Checks for the Xcode Command Line Tools and Rosetta 2
-2. **My machines only:** fetches `private/`, copies its files into place, and clones the
+2. **My machines only:** fetches `private/` and clones the
    repos listed in `private/repos.txt` into `~/projects`. This runs first because the
    temporary SSH key only lasts an hour.
-3. Installs Homebrew and everything in the [`Brewfile`](Brewfile) (`brew bundle`)
-4. Links the dotfiles into `~` with GNU Stow. Existing files are moved to `~/.dotfiles-backup/` and never deleted.
-5. Installs a base Python with pyenv (projects use pyenv-virtualenv venvs; nothing is pip-installed
-   globally), imports my GPG public key, installs zsh-defer, Neovim plugins, SbarLua and fonts
-6. Configures Touch ID for sudo, turns off Siri and the Spotlight shortcut (Raycast takes Cmd+Space),
+3. Installs Homebrew, everything in the [`Brewfile`](Brewfile) (`brew bundle`), and a base Python
+   with pyenv (projects use pyenv-virtualenv venvs; nothing is pip-installed globally)
+4. Links the dotfiles into `~` with GNU Stow (public files, then `private/`). Existing files are moved to
+   `~/.dotfiles-backup/` and never deleted.
+5. Sets up the launchd jobs: a Pushover notification at each login (`reboot.zsh`) and CUPS job-history
+   cleanup at boot (`cups.sh`)
+6. Imports my GPG public key, installs zsh-defer, Neovim plugins, SbarLua and fonts
+7. Configures Touch ID for sudo, turns off Siri and the Spotlight shortcut (Raycast takes Cmd+Space),
    and sets the macOS defaults (Dock, Finder, screenshots, hot corners...)
-7. Offers to open the Raycast settings import
+8. Offers to open the Raycast settings import
 
 It's safe to re-run. It ends with a summary listing anything that failed (missing packages,
 repos that didn't clone...), or the step where it stopped.
@@ -118,17 +121,17 @@ To only re-link dotfiles (no installs, no system changes), run `./install.zsh --
 ## 🔁 Day-to-day
 
 ```sh
-./install.zsh --link                      # re-copy private files and re-link everything (no installs)
+./install.zsh --link                      # re-link everything (no installs, no system changes)
 brew bundle --file ~/.dotfiles/Brewfile   # install anything new added to the Brewfile
-gpc                                       # list private files that changed locally
-gpc .ssh/config "Add server"              # save a private file: commit + push private, update the pointer here
+gpc                                       # show what changed in private
+gpc "Add server to ssh config"            # commit + push private, then record it here
 ```
 
 **How private files work:** `private/` is a submodule
-([dotfiles-private](https://github.com/matthewshammond/dotfiles-private)). The installer copies
-its files into the repo root, where `.gitignore` keeps them out of the public repo, and Stow
-links them into `~`. Editing `~/.ssh/config` edits that copy, so run `gpc <file> "<message>"`
-to save the change back to `private`.
+([dotfiles-private](https://github.com/matthewshammond/dotfiles-private)). Stow links it into `~`
+as a second package, so `~/.ssh/config` points straight at `private/.ssh/config`. Edit files where
+they live (`~/.ssh/config`, `~/.gitconfig`...), then run `gpc "message"` to commit and push them.
+Forgetting just leaves uncommitted changes in `private/`. Nothing gets out of sync.
 
 **Adding software:** use Homebrew if it's there, then the Mac App Store (`mas` lines in the
 Brewfile), and only download from the developer's website as a last resort (list below).
