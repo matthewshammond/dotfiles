@@ -63,6 +63,7 @@ op() {
   op "$@"
 }
 
+export EDITOR=nvim
 export BAT_THEME=Nord
 export CLICOLOR=1
 export LSCOLORS=GxFxCxDxBxegedabagaced

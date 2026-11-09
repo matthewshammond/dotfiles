@@ -1,30 +1,23 @@
-# ex - archive extractor
+# ex - archive extractor (macOS tar is libarchive: handles tar, zip, 7z, rar, xz, bz2...)
 # usage: ex <file>
 ex ()
 {
-    if [ -z "$1" ]; then
-        echo 'ex <file>';
-        return 1;
-    fi;
-    if [ -f $1 ] ; then
-        case $1 in
-            *.tar.bz2)   tar xjf $1   ;;
-            *.tar.gz)    tar xzf $1   ;;
-            *.tar.xz)    tar xJf $1   ;;
-            *.bz2)       bunzip2 $1   ;;
-            *.rar)       unrar x $1   ;;
-            *.gz)        gunzip $1    ;;
-            *.tar)       tar xf $1    ;;
-            *.tbz2)      tar xjf $1   ;;
-            *.tgz)       tar xzf $1   ;;
-            *.zip)       unzip $1     ;;
-            *.Z)         uncompress $1;;
-            *.7z)        7z x $1      ;;
-            *)           echo "'$1' cannot be extracted via ex()" ;;
-        esac
-    else
-        echo "'$1' is not a valid file"
+    if [[ -z $1 ]]; then
+        echo 'ex <file>'
+        return 1
     fi
+    if [[ ! -f $1 ]]; then
+        echo "'$1' is not a valid file"
+        return 1
+    fi
+    case $1 in
+        *.tar.*|*.tar|*.tgz|*.tbz2|*.zip|*.7z|*.rar) tar -xf "$1" ;;
+        *.gz)   gunzip "$1" ;;
+        *.bz2)  bunzip2 "$1" ;;
+        *.xz)   unxz "$1" ;;
+        *.Z)    uncompress "$1" ;;
+        *)      echo "'$1' cannot be extracted via ex()"; return 1 ;;
+    esac
 }
 
 # Compress PDF file
@@ -57,18 +50,8 @@ hnp ()
         echo 'hnp <title>';
         return 1;
     fi;
-    cd /Users/matthammond/projects/website && hugo new content articles/2026/"$1".md --kind article && vim content/articles/2026/"$1".md
-}
-
-# Download youtube video
-# usage: youtube <url>
-youtube ()
-{
-    if [ -z "$1" ]; then
-        echo 'youtube <url>';
-        return 1;
-    fi;
-    youtubedr download -d ~/Downloads/ -m mp4 -q hd1080 "$1"
+    local year=$(date +%Y)
+    cd ~/projects/website && hugo new content articles/$year/"$1".md --kind article && nvim content/articles/$year/"$1".md
 }
 
 # Get PID of process
@@ -116,7 +99,6 @@ pgproxy() {
 }
 
 
-export EDITOR=nvim
 
 # Aliases
 
@@ -130,16 +112,15 @@ alias df='duf'
 alias du='ncdu'
 alias tree='eza -aTI .git --git-ignore --icons=always'
 alias vim='nvim'
-alias -g ..='cd ..'
-alias -g ...='cd ../..'
-alias -g ....='cd ../../..'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
 alias -- ~='cd ~'
 alias -- /='cd /'
 alias -- -='cd -'
 alias listen='lsof -i TCP -n -P | grep LISTEN'
 alias cat='bat -p'
-alias ip='[ $(piactl get connectionstate) = "Connected" ] && echo "VPN IP:" $(piactl get vpnip) || echo "PUB IP:" $(curl -s ifconfig.me)'
-alias mac="printf '%s\n' 'Spoofed MAC address of en0 interface to $(ifconfig en0 | grep ether | awk '{print $2}')'; printf '%s\n' 'Hardware MAC address of en0 interface is $(networksetup -listallhardwareports | awk -v RS= '/en0/{print $NF}')'"
+alias ip='echo "Public IP: $(curl -s ifconfig.me)"; echo "Local IP:  $(ipconfig getifaddr en0)"'
 update() {
 	brew update && brew upgrade -y || return $?
 	local -a casks
@@ -169,13 +150,12 @@ alias unlock='chflags nouchg' #Unlock file
 
 # searching
 alias grep='grep --color'
-alias exploitdb='cd /opt/homebrew/opt/exploitdb/share/exploitdb && ls'
 
 alias ff="fzf --preview 'bat --style=numbers --color=always --line-range :500 {}'" # Find file recurssively using fzf
 alias ef='vim "$(ff)"' # open file in vim
 alias of='open "$(ff)"' # open file on desktop
 alias pf='qlmanage -p "$(ff)"'
-alias ql='qlmanage -p $1 2>/dev/null'
+ql() { qlmanage -p "$@" >/dev/null 2>&1 }
 alias jd='cd "$(find ~/Documents -type d -print | fzf)"'
 alias od='open "$(find ~/Documents -type d -print | fzf)"'
 
@@ -284,17 +264,18 @@ gcpg ()
 # gpg/encryption
 alias gpge='gpg -e -s -a -r Matt\ Hammond' # Ecrypt file
 
-# Decrypt file
+# Decrypt file (secret.txt.asc -> secret.txt)
 # usage: gpgd <file>
 gpgd ()
 {
-	if [ -z "$1" ]; then
-		echo 'gpgd <file>';
-		return 1;
-	fi;
-    file=$1
-    decrypted_file=${file/\.asc/}
-    gpg -d "$1" > "$decrypted_file"
+    if [[ -z $1 ]]; then
+        echo 'gpgd <file>'
+        return 1
+    fi
+    local out="${1%.asc}"
+    out="${out%.gpg}"
+    [[ $out == "$1" ]] && out="$1.decrypted"
+    gpg -o "$out" -d "$1"
 }
 
 # Encrypt directory
@@ -305,7 +286,8 @@ gpged ()
 		echo 'gpged <dir>';
 		return 1;
 	fi;
-    gpgtar -e -s -r Matt\ Hammond "$1" > "$1".asc
+    local dir="${1%/}"
+    gpgtar -e -s -r "Matt Hammond" "$dir" > "$dir.asc"
 }
 
 alias gpgdd='gpgtar -d' # Decrypt directory
@@ -351,19 +333,6 @@ update_yabai() {
   echo "$(whoami) ALL=(root) NOPASSWD: sha256:$(shasum -a 256 "$(which yabai)" | cut -d " " -f 1) $(which yabai) --load-sa" | sudo tee /private/etc/sudoers.d/yabai
 }
 
-
-# Spoof Wi-Fi MAC. usage: mac_spoof XX:XX:XX:XX:XX:XX
-mac_spoof() {
-  if [[ -z $1 ]]; then
-    echo 'mac_spoof XX:XX:XX:XX:XX:XX'
-    return 1
-  fi
-  networksetup -setairportpower en0 on
-  sudo /System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport --disassociate
-  sudo ifconfig en0 ether "$1"
-  printf '%s\n' "Spoofed MAC address of en0 interface to $(ifconfig en0 | grep ether | awk '{print $2}')"
-  printf '%s\n' "Hardware MAC address of en0 interface is $(networksetup -listallhardwareports | awk -v RS= '/en0/{print $NF}')"
-}
 
 # Move matching files into same-named folders. usage: f2f [globs…] (default: common video types)
 f2f() {
