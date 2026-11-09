@@ -14,7 +14,6 @@
 tap "felixkratz/formulae"                              # sketchybar, SbarLua
 tap "asmvik/formulae"                                  # yabai
 tap "jackielii/tap"                                    # skhd-zig
-tap "guumaster/tap"                                    # hostctl - remove with hostctl once Mac DNS is fixed
 
 # =============================================================================
 # Command-line tools
@@ -56,7 +55,6 @@ brew "ncdu"                                            # Disk usage analyzer
 
 # ---- Network ------------------------------------------------------------------
 brew "cloudflare-speed-cli"                            # Speed test (alias: speedtest)
-brew "guumaster/tap/hostctl"                           # Manage /etc/hosts - remove once Mac DNS is fixed
 
 # ---- Development --------------------------------------------------------------
 brew "git"                                             # Version control
