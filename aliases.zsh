@@ -54,50 +54,16 @@ hnp ()
     cd ~/projects/website && hugo new content articles/$year/"$1".md --kind article && nvim content/articles/$year/"$1".md
 }
 
-# Get PID of process
+# Find running processes by name (case-insensitive). Exact name first;
+# if nothing matches exactly, any process whose name contains it.
 # usage: pidof <process>
- pidof()
- {
-	if [ -z "$1" ]; then
-		echo 'pidof PROCESS';
-		return 1;
-	fi;
-	ps aux | grep -v grep | grep "$1" | awk '{print $2}';
+pidof() {
+    if [[ -z $1 ]]; then
+        echo 'pidof <process>'
+        return 1
+    fi
+    pgrep -ilx "$1" || pgrep -il "$1"
 }
-
-# Expose Postgresql to pgadmin4
-# usage: pgproxy on <CHANGEME> <port:5433>
-# usage: pgproxy off <CHANGEME>
-pgproxy() {
-  local action=$1
-  local id=$2
-  local port=${3:-5433}  # Default to 5433 if no port is provided
-  local container="aerostatus_db-$id"
-  local proxy_name="pgproxy-$id"
-  local network="aerostatus_app-network"
-
-  if [[ -z "$action" || -z "$id" ]]; then
-    echo "Usage: pgproxy on|off <instance-id> [local-port]"
-    return 1
-  fi
-
-  if [[ "$action" == "on" ]]; then
-    echo "Starting pgproxy for $container as $proxy_name on localhost:$port..."
-    docker run -d \
-      --name "$proxy_name" \
-      --network "$network" \
-      -p "$port":5432 \
-      alpine/socat \
-      TCP-LISTEN:5432,fork,reuseaddr TCP:"$container":5432
-  elif [[ "$action" == "off" ]]; then
-    echo "Stopping pgproxy container $proxy_name..."
-    docker rm -f "$proxy_name" >/dev/null 2>&1 || echo "No running proxy found for $id"
-  else
-    echo "Invalid action: $action (use 'on' or 'off')"
-    return 1
-  fi
-}
-
 
 
 # Aliases
@@ -122,6 +88,10 @@ alias listen='lsof -i TCP -n -P | grep LISTEN'
 alias cat='bat -p'
 alias ip='echo "Public IP: $(curl -s ifconfig.me)"; echo "Local IP:  $(ipconfig getifaddr en0)"'
 update() {
+	# yabai's sudoers rule pins its binary hash, so note it before upgrading
+	local yabai_bin=$(command -v yabai) yabai_hash
+	[[ -n $yabai_bin ]] && yabai_hash=$(shasum -a 256 "$yabai_bin" | cut -d ' ' -f 1)
+
 	brew update && brew upgrade -y || return $?
 	local -a casks
 	# "${(@f)$(cmd)}" becomes a single empty element when nothing is outdated,
@@ -135,6 +105,14 @@ update() {
 	cache="$(brew --cache)"
 	[[ -n $cache ]] && rm -rf "$cache"
 	sketchybar --trigger brew_update
+
+	# yabai was upgraded: refresh the sudoers hash (for --load-sa) and restart it
+	if [[ -n $yabai_bin && $(shasum -a 256 "$yabai_bin" | cut -d ' ' -f 1) != "$yabai_hash" ]]; then
+		echo "$(whoami) ALL=(root) NOPASSWD: sha256:$(shasum -a 256 "$yabai_bin" | cut -d ' ' -f 1) $yabai_bin --load-sa" \
+			| sudo tee /private/etc/sudoers.d/yabai >/dev/null
+		yabai --restart-service
+		echo "yabai upgraded: sudoers refreshed and service restarted"
+	fi
 }
 alias dps='docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Ports}}\t{{.Status}}"'
 alias flushdns='sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder'
@@ -142,8 +120,6 @@ alias flushdns='sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder'
 # editing
 alias scratchpad='${=EDITOR} ~/.scratchpad' # Quick access to the ~/.scratchpad file
 alias zshrc='${=EDITOR} ~/.zshrc' # Quick access to the ~/.zshrc file
-alias backup='rsync -av --exclude={".DS_Store",".git*","Icon?"} ~/Documents/Maps/AUG/ /Volumes/Go\ Drive/AU\ Health/AUG/' # Sync AUG map files to USB
-alias bu='rsync -av --exclude={".DS_Store",".git*","Icon?"} ~/Documents/Maps/AUG/ ~/Documents/Maps/AUG\ Backup/' # Sync AUG map files to backup dir
 alias record='asciinema rec -i 0.5 -t' # Start terminal recording #usage: record <filename>
 alias lock='chflags uchg' #Lock file
 alias unlock='chflags nouchg' #Unlock file
@@ -204,38 +180,22 @@ gpc () {
     git -C "$root" push
 }
 
-# Create git repository
-# usage: gcr <name>
-gcr()
-{
-	if [ -z "$1" ]; then
-		echo 'gcr <name>';
-		return 1;
-	fi;
-    gh repo create "$1" --public
-    git init
-    git add .
-    git commit -m "initial commit"
-    git branch -M main
-    git remote add origin git@github.com:matthewshammond/"$1".git
-    git push -u origin main
-}
+# Git create repo: turn the current folder into a new GitHub repo and push it
+# usage: gcr <name>            public repo
+#        gcr <name> private    private repo
+gcr() {
+    if [[ -z $1 ]]; then
+        echo 'gcr <name>            create a PUBLIC GitHub repo from this folder and push it'
+        echo 'gcr <name> private    same, but PRIVATE'
+        return 1
+    fi
+    local visibility=--public
+    [[ $2 == (private|--private|-p) ]] && visibility=--private
 
-# Create private git repository
-# usage: gcpr <name>
-gcpr()
-{
-	if [ -z "$1" ]; then
-		echo 'gcpr <name>';
-		return 1;
-	fi;
-    gh repo create "$1" --private
-    git init
-    git add .
-    git commit -m "initial commit"
-    git branch -M main
-    git remote add origin git@github.com:matthewshammond/"$1".git
-    git push -u origin main
+    [[ -d .git ]] || git init -b main
+    git add -A
+    git commit -m "initial commit" || return 1
+    gh repo create "$1" $visibility --source . --remote origin --push
 }
 
 # usage: gcg <filename> <description>
@@ -316,23 +276,12 @@ load() {
 # ssh
 alias vnc="ssh -f -o ExitOnForwardFailure=yes -L 15900:10.13.10.15:5900 voyager sleep 10; open vnc://127.0.0.1:15900"
 alias VNC="open vnc://10.13.10.15"
-alias proxy="nohup /Applications/ProxyToggle.app/Contents/MacOS/ProxyToggle > /dev/null 2>&1 &"
 alias burpON="networksetup -setwebproxy 'Wi-Fi' 127.0.0.1 8080 && networksetup -setsecurewebproxy 'Wi-Fi' 127.0.0.1 8080"
 alias burpOFF="networksetup -setwebproxystate 'Wi-Fi' off && networksetup -setsecurewebproxystate 'Wi-Fi' off"
 
 # launch commands
 alias serve='nohup python3 -m http.server 80 &'
 alias speedtest='cloudflare-speed-cli' # Internet speed test
-
-# Upgrade yabai and refresh its sudoers hash (binary path changes on brew upgrade)
-update_yabai() {
-  yabai --stop-service
-  yabai --uninstall-service
-  brew upgrade yabai
-  yabai --start-service
-  echo "$(whoami) ALL=(root) NOPASSWD: sha256:$(shasum -a 256 "$(which yabai)" | cut -d " " -f 1) $(which yabai) --load-sa" | sudo tee /private/etc/sudoers.d/yabai
-}
-
 
 # Move matching files into same-named folders. usage: f2f [globs…] (default: common video types)
 f2f() {

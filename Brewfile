@@ -36,6 +36,7 @@ brew "fzf"                                             # Fuzzy finder
 brew "coreutils"                                       # GNU core utilities
 brew "gnu-sed"                                         # GNU sed
 brew "grep"                                            # GNU grep
+brew "ghostscript"                                     # PDF engine for the pdfcompress function in aliases.zsh
 brew "jq"                                              # JSON processor
 brew "progress"                                        # Progress for cp/mv/dd
 brew "rename"                                          # Batch rename files
@@ -125,6 +126,7 @@ cask "microsoft-outlook"                               # Email
 cask "microsoft-powerpoint"                            # Presentations
 cask "microsoft-teams"                                 # Teams (desktop 3)
 cask "microsoft-word"                                  # Documents
+cask "pdf-expert"                                      # PDF editor - website version; sign in to unlock the Apple subscription
 cask "raycast"                                         # Launcher (Cmd+Space)
 cask "signal"                                          # Messaging
 
@@ -157,7 +159,6 @@ cask "font-sketchybar-app-font"                        # App icons in sketchybar
 # =============================================================================
 mas "1Password for Safari", id: 1569813296             # 1Password Safari extension
 mas "LogTen", id: 837263884                            # Pilot logbook
-mas "PDF Expert", id: 1055273043                       # PDF editor (subscription is through Apple)
 mas "Vimari", id: 1480933944                           # Vim keys for Safari
 mas "Xcode", id: 497799835                             # Uplink iOS app (~15 GB)
 
