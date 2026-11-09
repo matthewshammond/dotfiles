@@ -47,6 +47,8 @@ brew update
 
 print_header "Installing packages from Brewfile"
 print_info "App Store apps need you signed in to the App Store app first."
+print_info "Opening the App Store - sign in (Account at the bottom left), then come back here."
+open -a "App Store" 2>/dev/null || true
 print -n "\033[0;36m⚙️ Sign in to the App Store now if needed, then press Enter... \033[0m"
 read -r
 
