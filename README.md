@@ -86,13 +86,17 @@ An `https` clone skips everything private automatically.
 
 ## ✏️ Neovim only
 
-For a remote server (Linux or macOS) or someone else's computer. This installs Neovim plus
+For a remote server (Linux or macOS), a VM or someone else's computer. This installs Neovim plus
 what LazyVim needs, then pulls my Neovim config from this repo:
 
 ```sh
-sudo -v
 curl -fsSL "https://gist.githubusercontent.com/matthewshammond/7febd4e8e34ba08bd255a7fc60ea076c/raw" | bash
 ```
+
+- **macOS:** uses Homebrew (and installs it if needed)
+- **Linux:** installs the official Neovim release into `/opt/nvim`, because distro packages are too old
+  for LazyVim. The other tools come from apt, dnf, pacman, zypper or apk. Works as root or as a user with sudo.
+- Any existing Neovim config is moved to `~/.config/nvim.bak-<date>` first
 
 ## ⚙️ What the installer does
 
