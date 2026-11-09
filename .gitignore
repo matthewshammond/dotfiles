@@ -4,7 +4,6 @@
 \.gnupg/
 \.ntfy.yml
 \.ssh/
-hosts*
 # Ignore all variations of .DS_Store in all directories
 **/.[Dd][Ss]_[Ss]tore
 

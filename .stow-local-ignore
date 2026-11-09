@@ -6,7 +6,6 @@
 \.gitmodules
 \.stow-local-ignore
 aliases.zsh
-hosts\..*
 install.zsh
 LICENSE
 plist
