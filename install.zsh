@@ -99,10 +99,6 @@ use_bootstrap_agent() {
 # Private repo                                                                #
 ###############################################################################
 
-# Files from the private submodule that get copied into the repo root so stow
-# links them. Keep this in sync with gpc in aliases.zsh.
-private_items=(.gitconfig .ntfy.yml .ssh .gnupg .config/asciinema .config/gh)
-
 setup_private() {
   step "Private files"
   if ! is_private_clone; then
@@ -116,29 +112,39 @@ setup_private() {
     print_error "Couldn't fetch the private repo. Is your SSH key loaded? (ssh-add -l)"
     exit 1
   fi
-
-  # Copy each private file into the repo root unless a different local copy
-  # already exists (that would be an edit not yet saved with gpc - never clobber it)
-  local item f src dst
-  for item in $private_items; do
-    [[ -e private/$item ]] || continue
-    for f in ${(f)"$(cd private && find "$item" -type f ! -name .DS_Store)"}; do
-      src="private/$f"
-      dst="$f"
-      if [[ ! -e $dst ]]; then
-        mkdir -p "${dst:h}"
-        cp -p "$src" "$dst"
-        print_success "Copied private file: $f"
-      elif ! cmp -s "$src" "$dst"; then
-        fail "$f differs from private copy - kept the local one (save it with: gpc $f \"msg\")"
-      fi
-    done
-  done
+  print_success "Private repo ready"
 }
 
 ###############################################################################
 # Link dotfiles with stow                                                     #
 ###############################################################################
+
+# stow_package <dir>: link everything in <dir> into ~, first clearing anything
+# stow would refuse to replace. Two kinds of conflict:
+#  - "over existing target X since..."          a real file -> moved to the backup folder
+#  - "existing target is not owned by stow: X"  usually an old symlink into this
+#    repo -> just removed (stow recreates it); anything else is backed up
+stow_package() {
+  local stow=(/opt/homebrew/bin/stow --dir="$1" --target="$HOME")
+  local target conflicts p
+  conflicts=$($stow -n --restow . 2>&1 || true)
+  for target in ${(f)"$(print -r -- "$conflicts" | sed -n \
+      -e 's/.* over existing target \(.*\) since .*/\1/p' \
+      -e 's/.*existing target is not owned by stow: \(.*\)$/\1/p')"}; do
+    p="$HOME/$target"
+    # where the link points, even if that file no longer exists
+    local dest=$(readlink "$p" 2>/dev/null)
+    [[ -n $dest && $dest != /* ]] && dest="${p:h}/$dest"
+    if [[ -L $p && ${dest:a} == $dotfiledir/* ]]; then
+      rm "$p"
+    else
+      mkdir -p "$backupdir/${target:h}"
+      mv "$p" "$backupdir/$target"
+      print_info "Backed up existing ~/$target to $backupdir"
+    fi
+  done
+  $stow --restow .
+}
 
 link_dotfiles() {
   step "Linking dotfiles"
@@ -146,33 +152,19 @@ link_dotfiles() {
   # These must be real directories. If they don't exist, stow would turn the
   # whole directory into a symlink into this repo, and everything apps write
   # there (Claude history and credentials, ssh known_hosts, gpg keyrings, gh
-  # tokens) would land inside the public repo's working tree.
-  mkdir -p ~/.config ~/.claude ~/.config/gh ~/.config/herdr ~/.ssh ~/.gnupg
+  # tokens) would land inside the repo's working tree.
+  mkdir -p ~/.config ~/.claude ~/.config/gh ~/.config/herdr ~/.config/asciinema ~/.ssh ~/.gnupg
   chmod 700 ~/.ssh ~/.gnupg
 
-  local stow=(/opt/homebrew/bin/stow --dir="$dotfiledir" --target="$HOME")
+  print_step "Linking public dotfiles..."
+  stow_package "$dotfiledir"
 
-  # Clear anything stow would refuse to replace. Two kinds of conflict:
-  #  - "over existing target X since..."      a real file -> move it to the backup folder
-  #  - "existing target is not owned by stow: X"  usually an old hand-made symlink into
-  #    this repo -> just remove the link (stow recreates it); anything else is backed up
-  local target conflicts
-  conflicts=$($stow -n --restow . 2>&1 || true)
-  for target in ${(f)"$(print -r -- "$conflicts" | sed -n \
-      -e 's/.* over existing target \(.*\) since .*/\1/p' \
-      -e 's/.*existing target is not owned by stow: \(.*\)$/\1/p')"}; do
-    local p="$HOME/$target"
-    if [[ -L $p && ${p:A} == $dotfiledir/* ]]; then
-      rm "$p"
-    else
-      mkdir -p "$backupdir/${target:h}"
-      mv "$HOME/$target" "$backupdir/$target"
-      print_info "Backed up existing ~/$target to $backupdir"
-    fi
-  done
-
-  print_step "Running stow..."
-  $stow --restow .
+  # Private files are linked straight from the submodule, so editing
+  # ~/.ssh/config edits private/.ssh/config - commit it with gpc
+  if [[ -n "$(ls -A "$dotfiledir/private" 2>/dev/null)" ]]; then
+    print_step "Linking private dotfiles..."
+    stow_package "$dotfiledir/private"
+  fi
   print_success "Dotfiles linked"
 }
 
@@ -271,9 +263,9 @@ source "$dotfiledir/scripts/brew.zsh"
 link_dotfiles
 
 # GPG public key (private keys live on the YubiKey)
-if is_private_clone && [[ -f $dotfiledir/.gnupg/pub.asc ]]; then
+if is_private_clone && [[ -f $dotfiledir/private/.gnupg/pub.asc ]]; then
   step "Setting up GPG"
-  /opt/homebrew/bin/gpg --import "$dotfiledir/.gnupg/pub.asc"
+  /opt/homebrew/bin/gpg --import "$dotfiledir/private/.gnupg/pub.asc"
   print_success "GPG public key imported"
 fi
 

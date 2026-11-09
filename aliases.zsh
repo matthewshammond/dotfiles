@@ -189,82 +189,39 @@ alias gc='git commit -v -S' # Commit all and sign
 alias gl='git pull -v' # Pull verbose
 alias lg='lazygit' # Opens lazygit in current directory
 
-# Git Private Commit
-# usage: gpc <name> <message>
+# Git Private Commit - private files are linked straight from ~/.dotfiles/private,
+# so editing ~/.ssh/config (etc.) changes the private repo directly.
+# usage: gpc                 show what changed in private
+#        gpc "message"       commit + push all private changes, then record the
+#                            new private commit in the public repo
+#        gpc <file> "msg"    same, but only that file (path relative to ~)
 gpc () {
-    if [ -z "$1" ] && [ -z "$2" ]
-    then
-        # If no arguments, check for changes in private files
-        echo "🔍 Checking for changes in private files..."
-        # Check root level private files
-        for file in .gitconfig .gnupg/* .ntfy.yml .ssh/* hosts*; do
-            if [ -f "$file" ] && [ -f "private/$file" ]; then
-                if ! cmp -s "$file" "private/$file"; then
-                    echo "Modified: $file"
-                fi
-            fi
-        done
-        # Check .config directories
-        for dir in "asciinema" "gh"; do
-            if [ -d ".config/$dir" ] && [ -d "private/.config/$dir" ]; then
-                # Using diff to check directory differences
-                if ! diff -r ".config/$dir" "private/.config/$dir" >/dev/null 2>&1; then
-                    echo "Modified: .config/$dir"
-                fi
-            fi
-        done
+    local root="$HOME/.dotfiles" priv="$HOME/.dotfiles/private"
+
+    if [[ $# -eq 0 ]]; then
+        if [[ -z "$(git -C "$priv" status --porcelain)" ]]; then
+            print -P "%F{green}No private changes%f"
+        else
+            git -C "$priv" status --short
+        fi
         return 0
     fi
 
-    if [ -z "$1" ] || [ -z "$2" ]
-    then
-        echo 'gpc <file> <message>'
-        return 1
-    fi
+    local msg="${@[-1]}" file=""
+    (( $# >= 2 )) && file="$1"
 
-    # Check if we're in a private clone
-    if [ ! -d "private" ]; then
-        echo "Error: This is not a private clone. Use regular git commands instead."
-        return 1
+    if [[ -n $file ]]; then
+        git -C "$priv" add -- "${${file#$HOME/}#\~/}" || return 1
+    else
+        git -C "$priv" add -A || return 1
     fi
-    
-    # Handle .config directories specially
-    if [[ "$1" == .config/* ]]; then
-        # Extract the directory name after .config/
-        config_dir=$(echo "$1" | cut -d'/' -f2)
-        if [[ "$config_dir" == "asciinema" || "$config_dir" == "gh" ]]; then
-            # Create .config directory in private if it doesn't exist
-            mkdir -p "private/.config"
-            # Copy the entire directory
-            cp -R ".config/$config_dir" "private/.config/"
-            
-            # Then commit in the private repository (submodule)
-            cd "$(git rev-parse --show-toplevel)"
-            git -C private add -f ".config/$config_dir"
-            git -C private commit -m "$2"
-            git -C private push
-            
-            # Then update the submodule reference in the main repository
-            git add private
-            git commit -m "Update private submodule: $2"
-            git push
-            return 0
-        fi
-    fi
-    
-    # Handle regular private files (existing logic)
-    cp -f "$1" "private/$1"
-    
-    # Then commit in the private repository (submodule)
-    cd "$(git rev-parse --show-toplevel)"
-    git -C private add -f "$1"
-    git -C private commit -m "$2"
-    git -C private push
-    
-    # Then update the submodule reference in the main repository
-    git add private
-    git commit -m "Update private submodule: $2"
-    git push
+    git -C "$priv" commit -m "$msg" || return 1
+    git -C "$priv" push || return 1
+
+    # Record the new private commit in the public repo (only the pointer)
+    git -C "$root" add private
+    git -C "$root" commit -m "Update private submodule: $msg" -- private
+    git -C "$root" push
 }
 
 # Create git repository
