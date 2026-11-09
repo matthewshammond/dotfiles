@@ -383,8 +383,7 @@ alias burpOFF="networksetup -setwebproxystate 'Wi-Fi' off && networksetup -setse
 
 # launch commands
 alias serve='nohup python3 -m http.server 80 &'
-alias pgstart='pg_ctl -D /opt/homebrew/var/postgresql@14 start'
-alias pgstop='pg_ctl -D /opt/homebrew/var/postgresql@14 stop'
+alias speedtest='cloudflare-speed-cli' # Internet speed test
 
 # Upgrade yabai and refresh its sudoers hash (binary path changes on brew upgrade)
 update_yabai() {

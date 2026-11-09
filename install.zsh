@@ -232,13 +232,6 @@ while true; do
   print_warning "Computer name cannot be empty. Please try again."
 done
 
-# Installation options (used by conditional lines in the Brewfile)
-print_header "Installation Options"
-ask INSTALL_PYTHON "Install Python?" y
-ask INSTALL_RUBY   "Install Ruby?"   n
-ask INSTALL_GO     "Install Go?"     n
-ask INSTALL_RUST   "Install Rust?"   n
-export INSTALL_PYTHON INSTALL_RUBY INSTALL_GO INSTALL_RUST
 
 ###############################################################################
 # Private files and projects first - they need the bootstrap SSH key, which   #
