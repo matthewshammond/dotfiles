@@ -15,6 +15,7 @@ if (( ! $+functions[print_step] )); then
   print_warning() { printf "\033[1;33m⚠️ %s\033[0m\n" "$1" }
   print_info()    { printf "\033[0;35mℹ️ %s\033[0m\n" "$1" }
 fi
+(( $+functions[fail] )) || fail() { print_warning "$1" }
 
 dotfiledir="${dotfiledir:-$HOME/.dotfiles}"
 brewfile="$dotfiledir/Brewfile"
@@ -54,8 +55,12 @@ read -r
 if brew bundle --file="$brewfile"; then
   print_success "All Brewfile packages installed"
 else
-  print_warning "Some packages failed (see above). Re-run later with:"
-  print_warning "  brew bundle --file=$brewfile"
+  # List exactly what's still missing, e.g. "Cask foo needs to be installed."
+  missing=(${(f)"$(brew bundle check --verbose --no-upgrade --file="$brewfile" 2>/dev/null | sed -n 's/^→ //p')"})
+  for item in $missing; do
+    fail "Homebrew: $item"
+  done
+  print_warning "Re-run just the packages later with: brew bundle --file=$brewfile"
 fi
 
 ###############################################################################

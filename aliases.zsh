@@ -375,11 +375,6 @@ load() {
 }
 
 # ssh
-alias voyager="herdr --remote voyager"
-alias apollo="herdr --remote apollo"
-alias atlas="herdr --remote atlas"
-alias aeropoint="herdr --remote aeropoint"
-alias matthammond="herdr --remote matthammond"
 alias vnc="ssh -f -o ExitOnForwardFailure=yes -L 15900:10.13.10.15:5900 voyager sleep 10; open vnc://127.0.0.1:15900"
 alias VNC="open vnc://10.13.10.15"
 alias proxy="nohup /Applications/ProxyToggle.app/Contents/MacOS/ProxyToggle > /dev/null 2>&1 &"
@@ -400,15 +395,6 @@ update_yabai() {
   echo "$(whoami) ALL=(root) NOPASSWD: sha256:$(shasum -a 256 "$(which yabai)" | cut -d " " -f 1) $(which yabai) --load-sa" | sudo tee /private/etc/sudoers.d/yabai
 }
 
-# Enable Touch ID for sudo (one-time pam setup)
-enable_touchid() {
-  if grep -q 'pam_tid.so' /etc/pam.d/sudo; then
-    print -P "%F{green}Touch ID already enabled for sudo%f"
-    return 0
-  fi
-  sudo sed -i '' '2i\'$'\n''auth       sufficient     pam_tid.so'$'\n' /etc/pam.d/sudo
-  print -P "%F{green}Touch ID enabled for sudo%f"
-}
 
 # Spoof Wi-Fi MAC. usage: mac_spoof XX:XX:XX:XX:XX:XX
 mac_spoof() {
