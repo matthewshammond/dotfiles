@@ -2,477 +2,111 @@
 
 ###############################################################################
 # Homebrew Installation Script                                                #
-# This script installs Homebrew and all necessary packages                    #
+# Installs Homebrew, everything in ~/.dotfiles/Brewfile, and language         #
+# versions. Sourced by install.zsh, which sets INSTALL_PYTHON/RUBY/GO/RUST.  #
+# Can also be run on its own:  INSTALL_PYTHON=y zsh scripts/brew.zsh          #
 ###############################################################################
 
-# Terminal colors and icons (matching install.sh)
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-NC='\033[0m'
+# print_* helpers come from install.zsh; define fallbacks for standalone runs
+if (( ! $+functions[print_step] )); then
+  print_header()  { printf "\n\033[0;34m⭐ %s ⭐\033[0m\n" "$1" }
+  print_step()    { printf "\033[0;36m→ %s\033[0m\n" "$1" }
+  print_success() { printf "\033[0;32m✓ %s\033[0m\n" "$1" }
+  print_warning() { printf "\033[1;33m⚠️ %s\033[0m\n" "$1" }
+  print_info()    { printf "\033[0;35mℹ️ %s\033[0m\n" "$1" }
+fi
 
-CHECK="✓"
-WARN="⚠️"
-INFO="ℹ️"
-ARROW="→"
-STAR="⭐"
-BEER="🍺"
-PKG="📦"
+dotfiledir="${dotfiledir:-$HOME/.dotfiles}"
+brewfile="$dotfiledir/Brewfile"
 
-# Print functions (matching install.sh)
-print_header() {
-    printf "\n${BLUE}${STAR} %s ${STAR}${NC}\n" "$1"
-}
+print_header "Homebrew 🍺"
 
-print_step() {
-    printf "${CYAN}${ARROW} %s${NC}\n" "$1"
-}
-
-print_success() {
-    printf "${GREEN}${CHECK} %s${NC}\n" "$1"
-}
-
-print_warning() {
-    printf "${YELLOW}${WARN} %s${NC}\n" "$1"
-}
-
-print_error() {
-    printf "${RED}${WARN} %s${NC}\n" "$1"
-}
-
-print_info() {
-    printf "${PURPLE}${INFO} %s${NC}\n" "$1"
-}
-
-# Error handling
-set -e
-trap 'print_error "An error occurred during package installation. Check the logs for details."' ERR
-
-# Store arguments
-install_python=$1
-install_ruby=$2
-install_go=$3
-install_rust=$4
-install_pentest_tools=$5
-
-print_header "Starting Homebrew Installation and Setup ${BEER}"
-
-# Check if Homebrew is installed
-if ! command -v brew &> /dev/null; then
-    print_step "Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    print_success "Homebrew installed successfully"
+# Install Homebrew
+if [[ ! -x /opt/homebrew/bin/brew ]]; then
+  print_step "Installing Homebrew..."
+  NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  print_success "Homebrew installed"
 else
-    print_info "Homebrew already installed"
+  print_info "Homebrew already installed"
 fi
 
-# If ARM, add brew path to .zprofile and eval
-if [ $(uname -a | awk '{print $(NF)}') = 'arm64' ]; then
-    print_step "Configuring Homebrew for Apple Silicon..."
-    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-    print_success "Homebrew configured for Apple Silicon"
+# Put brew on PATH for this script and future login shells (only add the line once)
+eval "$(/opt/homebrew/bin/brew shellenv)"
+if ! grep -qs 'brew shellenv' ~/.zprofile; then
+  echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
 fi
 
-print_step "Configuring Homebrew settings..."
 brew analytics off
-print_success "Analytics disabled"
-
 print_step "Updating Homebrew..."
-brew upgrade
-print_success "Homebrew updated to latest version"
+brew update
 
 ###############################################################################
-# Taps                                                                         #
+# Brewfile                                                                    #
 ###############################################################################
 
-print_header "Adding Homebrew Taps"
+print_header "Installing packages from Brewfile"
+print_info "App Store apps need you signed in to the App Store app first."
+print -n "\033[0;36m⚙️ Sign in to the App Store now if needed, then press Enter... \033[0m"
+read -r
 
-print_step "Tapping additional repositories..."
-brew tap FelixKratz/formulae
-brew tap koekeishiya/formulae
-brew tap jackielii/tap
-print_success "Additional repositories tapped"
-
-###############################################################################
-# Core Development Tools                                                       #
-###############################################################################
-
-print_header "Installing Core Development Tools"
-
-# Programming Languages
-if [ "$install_python" = "y" ]; then
-    print_step "Installing Python environment..."
-    
-    # Install pyenv and pyenv-virtualenv
-    brew install pyenv pyenv-virtualenv xz
-    
-    # Initialize pyenv
-    export PYENV_ROOT="$HOME/.pyenv"
-    export PATH="$PYENV_ROOT/bin:$PATH"
-    export PIPX_ROOT="$HOME/.local"
-    export PATH="$PIPX_ROOT/bin:$PATH"
-    eval "$(pyenv init -)"
-    eval "$(pyenv virtualenv-init -)"
-    
-    # Install Python versions if they don't exist
-    if ! pyenv versions | grep -q "3.14"; then
-        print_step "Installing Python 3.14..."
-        pyenv install 3.14
-        pyenv rehash
-        pyenv global 3.14
-    else
-        print_success "Python 3.14 is already installed"
-    fi
-    
-    # Set global Python version
-    
-    # Install pip packages in global environment
-    print_step "Installing global pip packages..."
-    # Upgrade system pip
-    pip install --upgrade pip
-
-    # Upgrade and install packages in global virtualenv
-    pip install ntfy
-    pyenv rehash
-    
-    print_success "Python environment configured"
+# brew bundle keeps going when one package fails and reports at the end,
+# so a single bad package can't abort the whole install
+if brew bundle --file="$brewfile"; then
+  print_success "All Brewfile packages installed"
 else
-    print_info "Skipping Python installation"
-fi
-
-if [ "$install_go" = "y" ]; then
-    print_step "Installing Go environment..."
-    brew install goenv --HEAD
-
-    eval "$(goenv init -)"
-    export GOENV_ROOT="$HOME/.goenv"
-    export PATH="$GOENV_ROOT/bin:$PATH"
-    
-    # Install Go version if it doesn't exist
-    if ! goenv versions | grep -q "1.25.4"; then
-        print_step "Installing Go 1.25.4..."
-        goenv install 1.25.4
-        goenv rehash
-        goenv global 1.25.4
-    else
-        print_success "Go 1.25.4 is already installed"
-    fi
-    
-    print_success "Go environment configured"
-else
-    print_info "Skipping Go installation"
-fi
-
-if [ "$install_ruby" = "y" ]; then
-    print_step "Installing Ruby environment..."
-    brew install rbenv
-    
-    eval "$(rbenv init -)"
-    export RBENV_ROOT="$HOME/.rbenv"
-    export PATH="$RBENV_ROOT/bin:$PATH"
-
-    # Install Ruby version if it doesn't exist
-    if ! rbenv versions | grep -q "3.4.7"; then
-        print_step "Installing Ruby 3.4.7..."
-        rbenv install 3.4.7
-        rbenv global 3.4.7
-        gem update --system
-    else
-        print_success "Ruby 3.4.7 is already installed"
-    fi
-    
-    # Install gems if not already installed
-    if ! gem list | grep -q "rails"; then
-        print_step "Installing Rails..."
-        gem install rails
-    else
-        print_success "Rails is already installed"
-    fi
-    
-    if ! gem list | grep -q "bundler"; then
-        print_step "Installing Bundler..."
-        gem install bundler
-    else
-        print_success "Bundler is already installed"
-    fi
-    
-    print_success "Ruby environment configured"
-else
-    print_info "Skipping Ruby installation"
-fi
-
-if [ "$install_rust" = "y" ]; then
-    print_step "Installing Rust environment..."
-    
-    # Check if rustup is already installed
-    if ! command -v rustup &> /dev/null; then
-        brew install rustup
-        rustup-init -y
-    else
-        print_success "Rust is already installed"
-    fi
-    
-    export CARGO_ROOT="$HOME/.cargo"
-    export PATH="$CARGO_ROOT/bin:$PATH"
-
-    # Ensure the default toolchain is installed
-    rustup default stable
-    
-    print_success "Rust environment configured"
-else
-    print_info "Skipping Rust installation"
+  print_warning "Some packages failed (see above). Re-run later with:"
+  print_warning "  brew bundle --file=$brewfile"
 fi
 
 ###############################################################################
-# CLI Tools                                                                    #
+# Language versions (only when chosen in install.zsh)                         #
 ###############################################################################
 
-print_header "Installing CLI Tools"
+if [[ $INSTALL_PYTHON == y ]]; then
+  print_step "Setting up Python 3.14 via pyenv..."
+  export PYENV_ROOT="$HOME/.pyenv"
+  eval "$(pyenv init -)"
+  pyenv versions --bare | grep -q '^3\.14' || pyenv install 3.14
+  pyenv global 3.14
+  pyenv rehash
+  pip install --upgrade pip
+  pip install ntfy
+  print_success "Python ready"
+fi
 
-print_step "Installing essential command line tools..."
-# File operations
-brew install coreutils  # GNU core utilities
-brew install gnu-sed    # GNU sed
-brew install rename     # Batch rename files
-brew install rsync      # File synchronization
-brew install stow       # Symlink manager
+if [[ $INSTALL_GO == y ]]; then
+  print_step "Setting up Go 1.25.4 via goenv..."
+  export GOENV_ROOT="$HOME/.goenv"
+  eval "$(goenv init -)"
+  goenv versions --bare | grep -q '^1\.25\.4$' || goenv install 1.25.4
+  goenv global 1.25.4
+  print_success "Go ready"
+fi
 
-# System monitoring
-brew install btop       # Resource monitor
-brew install duf        # Disk usage
-brew install ncdu       # Disk usage analyzer
-brew install progress   # Progress bar for coreutils
+if [[ $INSTALL_RUBY == y ]]; then
+  print_step "Setting up Ruby 3.4.7 via rbenv..."
+  eval "$(rbenv init -)"
+  rbenv versions --bare | grep -q '^3\.4\.7$' || rbenv install 3.4.7
+  rbenv global 3.4.7
+  gem list -i rails >/dev/null || gem install rails
+  gem list -i bundler >/dev/null || gem install bundler
+  print_success "Ruby ready"
+fi
 
-# Search and navigation
-brew install atuin      # Shell history and scripts
-brew install fd         # Find alternative
-brew install fzf        # Fuzzy finder
-brew install ripgrep    # Grep alternative
-brew install autojump   # Directory navigation
-
-# Text processing
-brew install agg        # ASCII art generator
-brew install bat        # Cat with syntax highlighting
-brew install eza        # ls alternative
-brew install jq         # JSON processor
-
-# Network tools
-brew install openvpn    # VPN client
-brew install cloudflare-speed-cli   # Internet speed test
-brew install wget       # Web downloader
-brew install youtubedr  # YouTube downloader
-
-# Development tools
-brew install blackhole-2ch # virtual audio
-brew install cmake      # Build system
-brew install gh         # GitHub CLI
-brew install git        # Version control
-brew install herdr      # Terminal multiplexer
-brew install hugo       # Static site generator
-brew install lua        # Programming language
-brew install neovim     # Text editor
-brew install node       # JavaScript runtime
-brew install tmux       # Terminal multiplexer
-brew install tree-sitter-cli # Treesitter cli for neovim
-brew install watch      # Execute program periodically
-
-# Security tools
-brew install gnupg      # GNU Privacy Guard
-brew install hopenpgp-tools  # OpenPGP tools
-brew install pinentry-mac  # PIN entry
-brew install ykman      # YubiKey manager
-
-# macOS specific
-brew install mas        # Mac App Store CLI
-brew install mole       # Deep clean and optimize your Mac (mo)
-
-print_success "CLI tools installed successfully"
-
-###############################################################################
-# Shell Enhancements                                                          #
-###############################################################################
-
-print_header "Installing Shell Enhancements"
-
-print_step "Installing Zsh and plugins..."
-brew install zsh                    # Shell
-brew install zsh-autosuggestions    # Auto-suggestions
-brew install zsh-completions        # Completions
-brew install zsh-syntax-highlighting  # Syntax highlighting
-brew install zsh-vi-mode           # Vi mode
-brew install powerlevel10k         # Theme
-print_success "Zsh and plugins installed"
-
-###############################################################################
-# Window Management                                                           #
-###############################################################################
-
-print_header "Installing Window Management Tools"
-
-print_step "Installing window management tools..."
-brew install sketchybar  # Status bar
-brew install skhd-zig    # Hotkey daemon
-brew install yabai       # Window manager
-print_success "Window management tools installed"
-
-###############################################################################
-# Applications                                                                 #
-###############################################################################
-
-print_header "Installing Applications"
-
-print_step "Installing GUI applications..."
-# Security & Privacy
-brew install --cask 1password        # Password manager
-brew install --cask 1password-cli    # 1Password CLI
-brew install --cask gpg-suite        # GPG tools
-brew install --cask little-snitch    # Network monitor
-brew install --cask micro-snitch     # Microphone monitor
-brew install --cask tailscale        # VPN
-brew install --cask tor-browser      # Privacy browser
-brew install --cask veracrypt        # Disk encryption
-
-# Development
-brew install --cask cursor           # AI-powered IDE
-brew install --cask docker           # Container platform
-brew install --cask drawio           # Diagram editor
-brew install --cask ghostty          # Terminal emulator
-brew install --cask qgis             # GIS software
-brew install --cask rustdesk         # Remote desktop
-
-# Productivity
-brew install --cask betterdisplay    # Display management tool
-brew install --cask claude           # AI assistant
-brew install --cask claude-code      # Claude CLI
-brew install --cask discord          # Communication
-brew install --cask displaylink      # Promter XL monitor
-brew install --cask elgato-camera-hub # Prompter XL hub
-brew install --cask firefox          # Web browser
-brew install --cask fluidvoice       # voice-to-text dictation app
-brew install --cask grok-build       # Grok CLI
-brew install --cask microsoft-excel  # Spreadsheets
-brew install --cask microsoft-outlook # Email App
-brew install --cask microsoft-powerpoint # Presentation
-brew install --cask microsoft-teams  # Team collaboration
-brew install --cask microsoft-word   # Word editor
-brew install --cask obs              # Video conferencing software
-brew install --cask pdf-expert       # PDF editor
-brew install --cask plex             # Media server
-brew install --cask raycast          # Launcher
-brew install --cask signal           # Messaging
-
-# Utilities
-brew install --cask gimp             # Image editor
-brew install --cask karabiner-elements  # Keyboard customizer
-brew install --cask macfuse          # File system extension
-brew install --cask notchnook        # Utility to manage and customize the notch area
-brew install --cask qlmarkdown       # QuickLook for Markdown
-brew install --cask sf-symbols       # Apple SF Symbols
-brew install --cask ubersicht        # Custom desktop widgets
-
-# Fonts
-brew install --cask font-hack-nerd-font    # Hack Nerd Font
-brew install --cask font-jetbrains-mono-nerd-font # JetBrains Mono
-brew install --cask font-sketchybar-app-font     # Sketchybar App Font
-
-print_success "GUI applications installed"
-
-###############################################################################
-# Mac App Store Applications                                                   #
-###############################################################################
-
-print_header "Installing Mac App Store Applications"
-
-print_step "Installing applications from Mac App Store..."
-mas install 1569813296  # 1Password for Safari
-mas install 1198176727  # Controller
-mas install 424389933   # Final Cut Pro
-mas install 837263884   # LogTen
-mas install 1176895641  # Spark Email App
-mas install 1521133201  # Speed Player
-mas install 1480933944  # Vimari
-mas install 1497506650  # Yubico Authenticator
-print_success "Mac App Store applications installed"
-
-###############################################################################
-# Pentesting Tools (Optional)                                                 #
-###############################################################################
-
-if [ "$install_pentest_tools" = "y" ]; then
-    print_header "Installing Pentesting Tools"
-    
-    print_step "Installing CLI pentesting tools..."
-    brew install aircrack-ng    # Wireless network security tool
-    brew install bettercap      # Network attack and monitoring tool
-    brew install binwalk        # Firmware analysis tool
-    brew install crunch         # Wordlist generator
-    brew install exiftool       # Metadata analysis tool
-    brew install exploitdb      # Exploit database
-    brew install ffuf           # Web fuzzer
-    brew install gobuster       # Directory/file brute-forcer
-    brew install hashcat        # Password cracker
-    brew install hydra          # Network login cracker
-    brew install ifstat         # Network interface statistics
-    brew install john-jumbo     # Password cracker (John the Ripper)
-    brew install netcat         # Network utility
-    brew install nikto          # Web server scanner
-    brew install nmap           # Network mapper
-    brew install postgresql     # Database for tools
-    brew install proxychains-ng # Proxy chains
-    brew install rlwrap         # Readline wrapper
-    brew install samba          # SMB/CIFS tools
-    brew install snort          # Network intrusion detection
-    brew install sqlmap         # SQL injection tool
-    brew install telnet         # Network protocol
-    brew install theharvester   # Email/domain recon tool
-    brew install wpscanteam/tap/wpscan  # WordPress scanner
-    print_success "CLI pentesting tools installed"
-
-    print_step "Installing GUI pentesting tools..."
-    brew install --cask burp-suite    # Web security testing
-    brew install --cask ghidra        # Reverse engineering
-    brew install --cask metasploit    # Exploitation framework
-    brew install --cask owasp-zap     # Web app scanner
-    brew install --cask wireshark     # Network protocol analyzer
-    brew install --cask xquartz       # X11 server for GUI tools
-    print_success "GUI pentesting tools installed"
-
-    print_step "Installing additional pentesting tools..."
-    # enum4linux - SMB enumeration tool
-    git clone https://github.com/CiscoCXSecurity/enum4linux.git /opt/homebrew/Cellar/enum4linux && \
-        sudo ln -s /opt/homebrew/Cellar/enum4linux/enum4linux.pl /usr/local/bin/enum4linux
-    brew link enum4linux
-    
-    # smbmap - SMB share enumeration tool
-    git clone https://github.com/ShawnDEvans/smbmap.git /opt/homebrew/Cellar/smbmap && \
-        python3 -m pip install -r /opt/homebrew/Cellar/smbmap/requirements.txt && \
-        sudo ln -s /opt/homebrew/Cellar/smbmap/smbmap.py /usr/local/bin/smbmap
-    brew link smbmap
-
-    # crackmapexec - Windows/Active Directory exploitation tool
-    pipx install crackmapexec
-    # pwncat - Post-exploitation framework
-    pipx install git+https://github.com/calebstewart/pwncat.git
-    
-    print_success "Additional pentesting tools installed"
-else
-    print_info "Skipping pentesting tools installation"
+if [[ $INSTALL_RUST == y ]]; then
+  print_step "Setting up Rust via rustup..."
+  command -v rustc >/dev/null || rustup-init -y --no-modify-path
+  "$HOME/.cargo/bin/rustup" default stable
+  print_success "Rust ready"
 fi
 
 ###############################################################################
-# Final Configuration                                                         #
+# Services                                                                    #
 ###############################################################################
 
-print_header "Final Configuration"
-
-print_success "Installation complete! 🎉"
-
-# Start Services
-echo "Starting Services (grant permissions)..."
-skhd --start-service
-yabai --start-service
-brew services start sketchybar
+print_header "Starting window management services"
+print_info "macOS will ask for Accessibility / Screen Recording permissions."
+skhd --start-service 2>/dev/null || skhd --restart-service || true
+yabai --start-service 2>/dev/null || yabai --restart-service || true
+brew services restart sketchybar || true
+print_success "skhd, yabai and sketchybar started"
