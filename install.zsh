@@ -112,6 +112,9 @@ setup_private() {
     print_error "Couldn't fetch the private repo. Is your SSH key loaded? (ssh-add -l)"
     exit 1
   fi
+  # 'git push' in ~/.dotfiles pushes private first when needed, so the public
+  # repo never points at a private commit that isn't on GitHub yet
+  git -C "$dotfiledir" config push.recurseSubmodules on-demand
   print_success "Private repo ready"
 }
 
