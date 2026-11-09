@@ -476,25 +476,31 @@ dock_folder() {
   printf '<dict><key>tile-data</key><dict><key>arrangement</key><integer>1</integer><key>displayas</key><integer>1</integer><key>file-data</key><dict><key>_CFURLString</key><string>%s</string><key>_CFURLStringType</key><integer>15</integer></dict><key>file-label</key><string>%s</string><key>file-type</key><integer>2</integer><key>is-beta</key><integer>0</integer><key>preferreditemsize</key><string>-1</string><key>showas</key><integer>3</integer></dict><key>tile-type</key><string>directory-tile</string></dict>' "$1" "$2"
 }
 
-# TODO(review together): Dock apps, in order. Apps that aren't installed are skipped.
+# Dock apps, in desktop order. "A|B" means use the first one that's installed.
 dock_apps=(
-  "/System/Applications/Mail.app"
-  "/Applications/Microsoft Outlook.app"
-  "/System/Applications/Calendar.app"
-  "/System/Applications/Messages.app"
-  "/Applications/Microsoft Teams.app"
+  "/System/Applications/Notes.app"                          # desktop 1
+  "/Applications/Safari.app"                                # desktop 2
+  "/System/Applications/Messages.app"                       # desktop 3
   "/Applications/Signal.app"
-  "/Applications/Safari.app"
-  "/System/Applications/Notes.app"
+  "/Applications/Microsoft Teams.app"
+  "/Applications/Rex.app|/Applications/Rex Beta.app"        # desktop 5
+  "/System/Applications/Mail.app"                           # desktop 6
+  "/Applications/Microsoft Outlook.app"
+  "/System/Applications/Calendar.app"                       # desktop 7
+  "/Applications/Grok Bot.app"                              # desktop 8
 )
 
 print_step "Setting Dock items..."
 persistent_apps=()
-for app in $dock_apps; do
-  if [[ -d $app ]]; then
+for entry in $dock_apps; do
+  app=""
+  for candidate in ${(s:|:)entry}; do
+    [[ -d $candidate ]] && { app=$candidate; break }
+  done
+  if [[ -n $app ]]; then
     persistent_apps+=("$(dock_item "file://${app// /%20}/")")
   else
-    fail "Not added to the Dock (not installed): ${app:t}"
+    fail "Not added to the Dock (not installed): ${${entry##*|}:t}"
   fi
 done
 defaults write com.apple.dock persistent-apps -array $persistent_apps
