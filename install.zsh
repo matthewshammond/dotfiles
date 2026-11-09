@@ -2,11 +2,13 @@
 
 ################################################################################
 #                        🚀 macOS System Setup Script                           #
-# This script installs all packages and software, sets system preferences,     #
-# configures applications, and links dotfiles. Works on both Intel and ARM.    #
+# Installs all software, sets system preferences, configures applications and  #
+# links dotfiles. Safe to re-run.                                              #
+#                                                                              #
+#   ./install.zsh          full setup                                          #
+#   ./install.zsh --link   only copy private files + re-link dotfiles (stow)   #
 ################################################################################
 
-# Set strict error handling
 set -e
 
 # Terminal colors
@@ -25,275 +27,263 @@ INFO="ℹ️"
 ARROW="→"
 STAR="⭐"
 GEAR="⚙️"
-LOCK="🔒"
 
 # Print functions
-print_header() {
-  printf "\n${BLUE}${STAR} %s ${STAR}${NC}\n" "$1"
+print_header()  { printf "\n${BLUE}${STAR} %s ${STAR}${NC}\n" "$1" }
+print_step()    { printf "${CYAN}${ARROW} %s${NC}\n" "$1" }
+print_success() { printf "${GREEN}${CHECK} %s${NC}\n" "$1" }
+print_warning() { printf "${YELLOW}${WARN} %s${NC}\n" "$1" }
+print_error()   { printf "${RED}${WARN} %s${NC}\n" "$1" }
+print_info()    { printf "${PURPLE}${INFO} %s${NC}\n" "$1" }
+
+ask() { # ask <var> <question> <default y|n>
+  local reply
+  read "reply?$(printf "${CYAN}${GEAR} %s (y/n) [%s]: ${NC}" "$2" "$3")"
+  typeset -g "$1=${reply:-$3}"
 }
 
-print_step() {
-  printf "${CYAN}${ARROW} %s${NC}\n" "$1"
+# Run from the repo no matter where the script is called from
+dotfiledir="${0:A:h}"
+cd "$dotfiledir"
+export dotfiledir
+
+mode=full
+[[ $1 == --link ]] && mode=link
+
+timestamp=$(date +%Y%m%d-%H%M%S)
+backupdir="$HOME/.dotfiles-backup/$timestamp"
+
+# A clone made over SSH (git@github.com:...) is "my" machine and gets private
+is_private_clone() {
+  [[ "$(git -C "$dotfiledir" config --get remote.origin.url)" == git@github.com:* ]]
 }
 
-print_success() {
-  printf "${GREEN}${CHECK} %s${NC}\n" "$1"
+# The bootstrap key (pasted from 1Password) lives in macOS's built-in ssh-agent.
+# Once ~/.ssh/config is linked it points every host at 1Password's agent, which
+# isn't signed in yet on a fresh Mac - so prefer the built-in agent while it has a key.
+use_bootstrap_agent() {
+  if [[ -n $SSH_AUTH_SOCK ]] && ssh-add -l >/dev/null 2>&1; then
+    export GIT_SSH_COMMAND="ssh -o IdentityAgent=\"$SSH_AUTH_SOCK\""
+  fi
 }
 
-print_warning() {
-  printf "${YELLOW}${WARN} %s${NC}\n" "$1"
+###############################################################################
+# Private repo                                                                #
+###############################################################################
+
+# Files from the private submodule that get copied into the repo root so stow
+# links them. Keep this in sync with gpc in aliases.zsh.
+private_items=(.gitconfig .ntfy.yml .ssh .gnupg .config/asciinema .config/gh)
+
+setup_private() {
+  print_header "Private files"
+  if ! is_private_clone; then
+    print_info "Public clone (https) - skipping private files"
+    return 0
+  fi
+
+  print_step "Fetching private submodule..."
+  use_bootstrap_agent
+  if ! git -c submodule.private.update=checkout submodule update --init private; then
+    print_error "Couldn't fetch the private repo. Is your SSH key loaded? (ssh-add -l)"
+    exit 1
+  fi
+
+  # Copy each private file into the repo root unless a different local copy
+  # already exists (that would be an edit not yet saved with gpc - never clobber it)
+  local item f src dst
+  for item in $private_items; do
+    [[ -e private/$item ]] || continue
+    for f in ${(f)"$(cd private && find "$item" -type f ! -name .DS_Store)"}; do
+      src="private/$f"
+      dst="$f"
+      if [[ ! -e $dst ]]; then
+        mkdir -p "${dst:h}"
+        cp -p "$src" "$dst"
+        print_success "Copied private file: $f"
+      elif ! cmp -s "$src" "$dst"; then
+        print_warning "$f differs from private copy - kept the local one (save it with: gpc $f \"msg\")"
+      fi
+    done
+  done
 }
 
-print_error() {
-  printf "${RED}${WARN} %s${NC}\n" "$1"
+###############################################################################
+# Link dotfiles with stow                                                     #
+###############################################################################
+
+link_dotfiles() {
+  print_header "Linking dotfiles"
+
+  # These must be real directories. If they don't exist, stow would turn the
+  # whole directory into a symlink into this repo, and everything apps write
+  # there (Claude history and credentials, ssh known_hosts, gpg keyrings, gh
+  # tokens) would land inside the public repo's working tree.
+  mkdir -p ~/.config ~/.claude ~/.config/gh ~/.config/herdr ~/.ssh ~/.gnupg
+  chmod 700 ~/.ssh ~/.gnupg
+
+  local stow=(/opt/homebrew/bin/stow --dir="$dotfiledir" --target="$HOME")
+
+  # Move anything stow would refuse to replace into a backup folder (never rm -rf)
+  local target
+  for target in ${(f)"$($stow -n --restow . 2>&1 | sed -n 's/.* over existing target \(.*\) since .*/\1/p')"}; do
+    mkdir -p "$backupdir/${target:h}"
+    mv "$HOME/$target" "$backupdir/$target"
+    print_info "Backed up existing ~/$target to $backupdir"
+  done
+
+  print_step "Running stow..."
+  $stow --restow .
+  print_success "Dotfiles linked"
 }
 
-print_info() {
-  printf "${PURPLE}${INFO} %s${NC}\n" "$1"
-}
+if [[ $mode == link ]]; then
+  setup_private
+  link_dotfiles
+  print_success "Done - dotfiles re-linked"
+  exit 0
+fi
 
-# Set the dotfiles directory
-dotfiledir="$HOME/.dotfiles"
+###############################################################################
+# Full install starts here                                                    #
+###############################################################################
 
-# Print welcome message
 print_header "Welcome to the macOS System Setup Script!"
 print_info "This script will set up your macOS system with all necessary software and configurations."
 
-# Ask for sudo upfront
+# Ask for sudo upfront and keep it alive
 print_step "Requesting administrator privileges..."
 sudo -v
-
-# Keep sudo alive
-while true; do
-  sudo -n true
-  sleep 60
-  kill -0 "$$" || exit
-done 2>/dev/null &
+while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+SUDO_KEEPALIVE_PID=$!
 
 # Prevent system sleep during install
-print_step "Preventing system sleep during installation..."
 /usr/bin/caffeinate -d &
 CAFFEINATE_PID=$!
+trap 'kill $CAFFEINATE_PID $SUDO_KEEPALIVE_PID 2>/dev/null' EXIT
 
-# Check and setup logging
-print_step "Setting up logging..."
-[ ! -d $HOME/logs ] && mkdir $HOME/logs
-exec 1> >(tee $HOME/logs/install.log) 2>&1
+# Logging
+mkdir -p "$HOME/logs"
+exec > >(tee "$HOME/logs/install.log") 2>&1
 print_success "Logs will be saved to $HOME/logs/install.log"
 
-# Close System Preferences
-print_step "Closing System Preferences..."
-osascript -e 'tell application "System Preferences" to quit'
+osascript -e 'quit app "System Settings"' 2>/dev/null || true
 
-# Check for Xcode Command Line Tools
+# Xcode Command Line Tools (git needs these, so they're normally already here)
 print_step "Checking for Xcode Command Line Tools..."
-if [ $(
-  xcode-select -p 1>/dev/null
-  echo $?
-) != 0 ]; then
-  print_warning "Installing Xcode Command Line Tools..."
-  sudo xcodebuild -license accept
-  print_success "Xcode Command Line Tools installed"
-else
-  print_success "Xcode Command Line Tools already installed"
+if ! xcode-select -p >/dev/null 2>&1; then
+  print_warning "Installing Xcode Command Line Tools - finish the dialog that pops up..."
+  xcode-select --install || true
+  until xcode-select -p >/dev/null 2>&1; do sleep 5; done
 fi
+print_success "Xcode Command Line Tools installed"
 
-# Check for ARM and install Rosetta if needed
-if [ $(uname -a | awk '{print $(NF)}') = 'arm64' ]; then
-  print_step "ARM processor detected, installing Rosetta 2..."
+# Rosetta 2 (some apps still need it on Apple Silicon)
+if [[ $(uname -m) == arm64 ]] && ! /usr/bin/pgrep -q oahd; then
+  print_step "Installing Rosetta 2..."
   /usr/sbin/softwareupdate --install-rosetta --agree-to-license
   print_success "Rosetta 2 installed"
 fi
 
-# Get computer name
+# Computer name
 print_step "Setting up computer identity..."
 while true; do
-    read "name?$(printf "${CYAN}${GEAR} Enter computer name: ${NC}")"
-    if [ -z "$name" ]; then
-        print_warning "Computer name cannot be empty. Please try again."
-    else
-        break
-    fi
+  read "name?$(printf "${CYAN}${GEAR} Enter computer name: ${NC}")"
+  [[ -n $name ]] && break
+  print_warning "Computer name cannot be empty. Please try again."
 done
 
-# Installation options with defaults
+# Installation options (used by conditional lines in the Brewfile)
 print_header "Installation Options"
-read "install_python?$(printf "${CYAN}${GEAR} Install Python? (y/n) [y]: ${NC}")"
-install_python=${install_python:-y}
+ask INSTALL_PYTHON "Install Python?" y
+ask INSTALL_RUBY   "Install Ruby?"   n
+ask INSTALL_GO     "Install Go?"     n
+ask INSTALL_RUST   "Install Rust?"   n
+export INSTALL_PYTHON INSTALL_RUBY INSTALL_GO INSTALL_RUST
 
-read "install_ruby?$(printf "${CYAN}${GEAR} Install Ruby? (y/n) [n]: ${NC}")"
-install_ruby=${install_ruby:-n}
+###############################################################################
+# Private files and projects first - they need the bootstrap SSH key, which   #
+# only lasts an hour, and the Homebrew step can take longer than that         #
+###############################################################################
 
-read "install_go?$(printf "${CYAN}${GEAR} Install Go? (y/n) [n]: ${NC}")"
-install_go=${install_go:-n}
+setup_private
 
-read "install_rust?$(printf "${CYAN}${GEAR} Install Rust? (y/n) [n]: ${NC}")"
-install_rust=${install_rust:-n}
-
-read "install_pentest_tools?$(printf "${CYAN}${GEAR} Install pentesting tools? (y/n) [n]: ${NC}")"
-install_pentest_tools=${install_pentest_tools:-n}
-
-# Setup dotfiles
-print_header "Setting up dotfiles"
-print_step "Checking repository type..."
-
-# Check if private repository
-if [[ "$(git config --get remote.origin.url)" == *"git@github.com"* ]]; then
-    print_info "Private repository detected"
-    print_step "Initializing private repository..."
-    git submodule init
-    git submodule update
-
-    # Check if there are actual files in the private directory
-    if [ -n "$(ls -A ${dotfiledir}/private)" ]; then
-        print_step "Processing private files..."
-
-        # Handle .config directories from private repo
-        if [ -d "${dotfiledir}/private/.config" ]; then
-            print_step "Processing private .config directories..."
-
-            # Copy specific .config directories (asciinema and gh)
-            for dir in "asciinema" "gh"; do
-                if [ -d "${dotfiledir}/private/.config/$dir" ]; then
-                    print_step "Copying private $dir configuration..."
-                    cp -R "${dotfiledir}/private/.config/$dir" "${dotfiledir}/.config/"
-                    print_success "$dir configuration copied"
-                fi
-            done
-        fi
-
-        # Then handle all other private files
-        print_step "Processing other private files..."
-        for file in "${dotfiledir}/private"/*; do
-            if [ -f "$file" ]; then  # Only process files, not directories
-                filename=$(basename "$file")
-                if [[ "$filename" != ".DS_Store" && "$filename" != "README.md" && "$filename" != ".config" ]]; then
-                    cp "$file" "${dotfiledir}/"
-                    print_success "Copied private file: $filename"
-                fi
-            fi
-        done
-
-        print_success "Private files initialized"
+clone_projects() {
+  local list="$dotfiledir/private/repos.txt"
+  [[ -f $list ]] || return 0
+  print_header "Cloning projects into ~/projects"
+  use_bootstrap_agent
+  mkdir -p ~/projects
+  local repo folder rest
+  while read -r repo folder rest; do
+    [[ -z $repo || $repo == \#* ]] && continue
+    [[ -z $folder || $folder == \#* ]] && folder=$repo
+    if [[ -d ~/projects/$folder/.git ]]; then
+      print_info "Already cloned: $folder"
+    elif git clone -q "git@github.com:matthewshammond/$repo.git" ~/projects/$folder; then
+      print_success "Cloned $repo -> ~/projects/$folder"
     else
-        print_info "No files found in private directory"
+      print_warning "Failed to clone $repo (re-run install later, or clone it by hand)"
     fi
-else
-    print_info "Public repository detected, skipping private files"
+  done < "$list"
+}
+is_private_clone && clone_projects
+
+###############################################################################
+# Software                                                                    #
+###############################################################################
+
+source "$dotfiledir/scripts/brew.zsh"
+
+link_dotfiles
+
+# GPG public key (private keys live on the YubiKey)
+if is_private_clone && [[ -f $dotfiledir/.gnupg/pub.asc ]]; then
+  print_header "Setting up GPG"
+  /opt/homebrew/bin/gpg --import "$dotfiledir/.gnupg/pub.asc"
+  print_success "GPG public key imported"
 fi
 
-# Run Homebrew script
-print_header "Installing Software"
-print_step "Running Homebrew installation..."
-source ${dotfiledir}/scripts/brew.zsh "$install_python" "$install_ruby" "$install_go" "$install_rust" "$install_pentest_tools"
-
-# Setup shell history
-print_header "Configuring Shell"
-print_step "Setting up shell history..."
-setopt HIST_VERIFY
-setopt SHARE_HISTORY
-setopt APPEND_HISTORY
-setopt HISTIGNOREALLDUPS
-print_success "Shell history configured"
-
-# Setup GPG
-print_header "Setting up GPG"
-if [[ "$(git config --get remote.origin.url)" == *"git@github.com"* ]]; then
-  print_step "Configuring GPG..."
-  gpgfiles=('dirmngr.conf' 'gpg-agent.conf' 'gpg.conf')
-  cd ${HOME}/.gnupg
-  for file in ${gpgfiles}; do
-    [ -f "$file" ] && rm -rf $file
-    print_info "Removed $file"
-  done
-  print_step "Importing GPG public keyring..."
-  gpg --import ${dotfiledir}/.gnupg/pub.asc
-  print_success "GPG configured"
-else
-  print_info "Skipping GPG setup (public repository)"
+# zsh-defer for lazy loading
+if [[ ! -d ~/.zsh-defer ]]; then
+  print_step "Installing zsh-defer..."
+  git clone -q https://github.com/romkatv/zsh-defer.git ~/.zsh-defer
 fi
+print_success "zsh-defer installed"
 
-# Install LazyVim
+# Neovim: install LazyVim plugins now so theme switching works on first use
 print_header "Setting up Neovim"
-print_step "Installing LazyVim..."
-rm -rf ~/.config/nvim
-git clone https://github.com/LazyVim/starter ~/.config/nvim
-rm -rf ~/.config/nvim/.git
-rm -rf ~/.config/nvim/init.lua
-rm -rf ~/.config/nvim/lua
-print_success "LazyVim installed"
+nvim --headless "+Lazy! sync" +qa || print_warning "Neovim plugin install had errors - open nvim to retry"
+print_success "Neovim plugins installed"
 
-# Use full paths for commands
-BREW_PATH="/opt/homebrew/bin/brew"
-OP_PATH="/opt/homebrew/bin/op"
-GPG_PATH="/opt/homebrew/bin/gpgconf"
-STOW_PATH="/opt/homebrew/bin/stow"
-
-# Create symlinks
-print_header "Creating Symlinks"
-print_step "Cleaning up existing files first..."
-# List of files/directories to clean up before stow
-files_to_clean=(
-    "$HOME/.config/asciinema"
-    "$HOME/.config/gh"
-    "$HOME/.config/ghostty"
-    "$HOME/.config/karabiner"
-    "$HOME/.config/sketchybar"
-    "$HOME/.config/skhd"
-    "$HOME/.config/yabai"
-    "$HOME/.gitconfig"
-    "$HOME/.gnupg"
-    "$HOME/.ntfy.yml"
-    "$HOME/.p10k.zsh"
-    "$HOME/.ssh"
-    "$HOME/.tmux.conf"
-    "$HOME/.zshrc"
-)
-
-# Clean up existing files
-for file in "${files_to_clean[@]}"; do
-    if [ -e "$file" ]; then
-        print_info "Removing $file"
-        rm -rf "$file"
-    fi
-done
-print_step "Running stow..."
-$STOW_PATH .
-print_success "Symlinks created"
-
-# Install zsh-defer for lazy loading
-print_header "Setting up zsh-defer"
-print_step "Installing zsh-defer for clean lazy loading..."
-if [ ! -d ~/.zsh-defer ]; then
-  git clone https://github.com/romkatv/zsh-defer.git ~/.zsh-defer
-  print_success "zsh-defer installed"
-else
-  print_success "zsh-defer already installed"
-fi
-
-# Install SbarLua & Sketchybar Font
+# Sketchybar: SbarLua + Simon Symbol font
 print_header "Setting up Sketchybar"
-print_step "Installing custom font and SbarLua..."
-(git clone https://github.com/FelixKratz/SbarLua.git /tmp/SbarLua && cd /tmp/SbarLua/ && make install && rm -rf /tmp/SbarLua/)
-print_step "Installing Simon Symbol font (space 8 icon)..."
+rm -rf /tmp/SbarLua
+git clone -q https://github.com/FelixKratz/SbarLua.git /tmp/SbarLua
+(cd /tmp/SbarLua && make install)
+rm -rf /tmp/SbarLua
 mkdir -p "$HOME/Library/Fonts"
-cp "${dotfiledir}/.config/sketchybar/icons/simon/SimonSymbol.otf" "$HOME/Library/Fonts/"
-print_success "Simon Symbol font installed"
-/opt/homebrew/bin/brew services restart sketchybar
+cp "$dotfiledir/.config/sketchybar/icons/simon/SimonSymbol.otf" "$HOME/Library/Fonts/"
+brew services restart sketchybar || true
 print_success "Sketchybar setup complete"
 
-# Start herdr
-print_header "Starting herdr"
-/opt/homebrew/bin/brew services start herdr
-print_success "herdr setup complete"
+# Übersicht flip-clock widget
+widgets="$HOME/Library/Application Support/Übersicht/widgets"
+mkdir -p "$widgets"
+cp -R "$dotfiledir/.config/Übersicht/widgets/flip-clock.widget" "$widgets/"
+print_success "Übersicht flip-clock widget installed"
 
-# Configure Touch ID for sudo
+# Touch ID for sudo (sudo_local survives macOS updates; /etc/pam.d/sudo doesn't)
 print_header "Configuring Security"
-print_step "Setting up Touch ID for sudo..."
-sudo sed -i '' '2i\'$'\n''auth       sufficient     pam_tid.so'$'\n' /etc/pam.d/sudo
+if ! grep -qs pam_tid /etc/pam.d/sudo_local; then
+  echo "auth       sufficient     pam_tid.so" | sudo tee -a /etc/pam.d/sudo_local >/dev/null
+fi
 print_success "Touch ID configured for sudo"
 
-# System Modifications
+###############################################################################
+# System Preferences                                                          #
+###############################################################################
+
 print_header "Configuring System Preferences"
 
 # Cmd+1..8 switches to Desktop 1..8 (sketchybar space clicks send these keys)
@@ -312,55 +302,33 @@ print_success "Cmd+1..8 desktop shortcuts set"
 
 print_header "Configuring General UI/UX Settings"
 
-# Set computer name and network identity
 print_step "Setting computer name..."
-sudo scutil --set ComputerName $name
-sudo scutil --set HostName $name
-sudo scutil --set LocalHostName $name
-sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName -string $name
+sudo scutil --set ComputerName "$name"
+sudo scutil --set HostName "$name"
+sudo scutil --set LocalHostName "$name"
+sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName -string "$name"
 print_success "Computer name set to: $name"
 
-# Set highlight color
 print_step "Applying custom UI colors..."
 defaults write NSGlobalDomain AppleHighlightColor -string "0.6392156863 0.7450980392 0.5490196078"
-print_success "Highlight color customized"
 
-# Expand save panel by default
-print_step "Expanding save dialogs..."
+print_step "Expanding save and print dialogs..."
 defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
 defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode2 -bool true
-print_success "Save panels will be expanded by default"
-
-# Expand print panel by default
-print_step "Expanding print dialogs..."
 defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
 defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
-print_success "Print panels will be expanded by default"
-
-# Auto-quit printer app
-print_step "Configuring printer behavior..."
 defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true
-print_success "Print app will quit when finished"
 
-# Disable "Are you sure you want to open this application?" dialog
 print_step "Adjusting security dialogs..."
 defaults write com.apple.LaunchServices LSQuarantine -bool false
-print_success "App security warnings disabled"
-
-# Disable crash reporter
-print_step "Configuring crash reporting..."
 defaults write com.apple.CrashReporter DialogType -string "none"
-print_success "Crash reporter dialogs disabled"
 
-# Show system info in login window
 print_step "Customizing login window..."
 sudo defaults write /Library/Preferences/com.apple.loginwindow AdminHostInfo HostName
-print_success "System info enabled in login window"
 
-# Set 24-hour time
 print_step "Setting time format..."
 defaults write com.apple.menuextra.clock DateFormat -string 'EEE MMM d  H:mm'
-print_success "24-hour time format enabled"
+print_success "General UI/UX configured"
 
 ###############################################################################
 # Screen                                                                      #
@@ -368,15 +336,12 @@ print_success "24-hour time format enabled"
 
 print_header "Configuring Screen Settings"
 
-# Screen lock settings
-print_step "Configuring screen security..."
 defaults write com.apple.screensaver askForPassword -int 1
 defaults write com.apple.screensaver askForPasswordDelay -int 0
 print_success "Immediate password requirement enabled for screensaver"
 
-# Screenshot settings
-print_step "Setting up screenshots..."
-defaults write com.apple.screencapture location -string "${HOME}/Downloads"
+mkdir -p "$HOME/Downloads"
+defaults write com.apple.screencapture location -string "$HOME/Downloads"
 defaults write com.apple.screencapture type -string "jpg"
 defaults write com.apple.screencapture disable-shadow -bool true
 print_success "Screenshots configured: JPG format, no shadow, saved to Downloads"
@@ -387,40 +352,18 @@ print_success "Screenshots configured: JPG format, no shadow, saved to Downloads
 
 print_header "Configuring Finder Settings"
 
-# Set default location
-print_step "Setting default Finder location..."
 defaults write com.apple.finder NewWindowTarget -string "PfLo"
-defaults write com.apple.finder NewWindowTargetPath -string "file://${HOME}/Documents"
-print_success "New Finder windows will open to Documents"
-
-# Configure desktop icons
-print_step "Configuring desktop icons..."
+defaults write com.apple.finder NewWindowTargetPath -string "file://$HOME/Documents/"
 defaults write com.apple.finder ShowExternalHardDrivesOnDesktop -bool true
 defaults write com.apple.finder ShowHardDrivesOnDesktop -bool false
 defaults write com.apple.finder ShowMountedServersOnDesktop -bool false
 defaults write com.apple.finder ShowRemovableMediaOnDesktop -bool true
-print_success "Desktop icons configured"
-
-# Show file extensions
-print_step "Adjusting file visibility..."
 defaults write NSGlobalDomain AppleShowAllExtensions -bool true
-print_success "File extensions will be shown"
-
-# Show status bar and path bar
-print_step "Enhancing Finder interface..."
 defaults write com.apple.finder ShowStatusBar -bool true
 defaults write com.apple.finder ShowPathbar -bool true
-print_success "Status bar and path bar enabled"
-
-# Keep folders on top when sorting
-print_step "Setting sort preferences..."
 defaults write com.apple.finder _FXSortFoldersFirst -bool true
-print_success "Folders will appear first in sorting"
-
-# Search current folder by default
-print_step "Configuring search behavior..."
 defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
-print_success "Search will default to current folder"
+print_success "Finder configured"
 
 ###############################################################################
 # Dock & Menu Bar                                                             #
@@ -428,7 +371,6 @@ print_success "Search will default to current folder"
 
 print_header "Configuring Dock and Menu Bar"
 
-# Dock settings
 print_step "Configuring Dock..."
 defaults write com.apple.dock autohide -bool true
 defaults write com.apple.dock "autohide-delay" -float 1000
@@ -464,54 +406,49 @@ defaults write com.apple.dock "wvous-tl-modifier" -int 0
 defaults write com.apple.dock "wvous-tr-corner" -int 0
 defaults write com.apple.dock "wvous-tr-modifier" -int 0
 
-# Clear existing Dock items
-print_step "Clearing existing Dock items..."
-defaults delete com.apple.dock persistent-apps
-defaults delete com.apple.dock persistent-others
-
-# Add applications to Dock
-print_step "Adding applications to Dock..."
 dock_item() {
-    printf '<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>%s</string><key>_CFURLStringType</key><integer>15</integer></dict></dict></dict>', "$1"
+  printf '<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>%s</string><key>_CFURLStringType</key><integer>15</integer></dict></dict></dict>' "$1"
 }
 
-Mail=$(dock_item "file:///System/Applications/Mail.app/")
-Outlook=$(dock_item "file:///Applications/Microsoft%20Outlook.app/")
-Spark=$(dock_item "file:///Applications/Spark.app/")
-Calendars=$(dock_item "file:///Applications/Calendars.app/")
-Calendar=$(dock_item "file:///System/Applications/Calendar.app/")
-Messages=$(dock_item "file:///System/Applications/Messages.app/")
-Discord=$(dock_item "file:///Applications/Discord.app/")
-Signal=$(dock_item "file:///Applications/Signal.app/")
-Safari=$(dock_item "file:///System/Cryptexes/App/System/Applications/Safari.app/")
-Notes=$(dock_item "file:///System/Applications/Notes.app/")
-Ghostty=$(dock_item "file:///Applications/Ghostty.app/")
-
-# Add folders to Dock with proper attributes
-print_step "Adding folders to Dock..."
 dock_folder() {
-    printf '<dict><key>tile-data</key><dict><key>arrangement</key><integer>1</integer><key>displayas</key><integer>1</integer><key>file-data</key><dict><key>_CFURLString</key><string>%s</string><key>_CFURLStringType</key><integer>15</integer></dict><key>file-label</key><string>%s</string><key>file-type</key><integer>2</integer><key>is-beta</key><integer>0</integer><key>preferreditemsize</key><string>-1</string><key>showas</key><integer>3</integer></dict><key>tile-type</key><string>directory-tile</string></dict>', "$1" "$2"
+  printf '<dict><key>tile-data</key><dict><key>arrangement</key><integer>1</integer><key>displayas</key><integer>1</integer><key>file-data</key><dict><key>_CFURLString</key><string>%s</string><key>_CFURLStringType</key><integer>15</integer></dict><key>file-label</key><string>%s</string><key>file-type</key><integer>2</integer><key>is-beta</key><integer>0</integer><key>preferreditemsize</key><string>-1</string><key>showas</key><integer>3</integer></dict><key>tile-type</key><string>directory-tile</string></dict>' "$1" "$2"
 }
 
-Applications=$(dock_folder "file:///Applications/" "Applications")
-Documents=$(dock_folder "file:///Users/matthammond/Documents/" "Documents")
-Downloads=$(dock_folder "file:///Users/matthammond/Downloads/" "Downloads")
+# TODO(review together): Dock apps, in order. Apps that aren't installed are skipped.
+dock_apps=(
+  "/System/Applications/Mail.app"
+  "/Applications/Microsoft Outlook.app"
+  "/System/Applications/Calendar.app"
+  "/System/Applications/Messages.app"
+  "/Applications/Microsoft Teams.app"
+  "/Applications/Discord.app"
+  "/Applications/Signal.app"
+  "/Applications/Safari.app"
+  "/System/Applications/Notes.app"
+)
 
-# Set Dock items
-defaults write com.apple.dock persistent-apps -array "$Mail" "$Outlook" "$Spark" "$Calendars" "$Calendar" "$Messages" "$Discord" "$Signal" "$Safari" "$Notes" "$Ghostty"
-defaults write com.apple.dock persistent-others -array "$Applications" "$Documents" "$Downloads"
-
+print_step "Setting Dock items..."
+persistent_apps=()
+for app in $dock_apps; do
+  if [[ -d $app ]]; then
+    persistent_apps+=("$(dock_item "file://${app// /%20}/")")
+  else
+    print_warning "Not in Dock (not installed): ${app:t}"
+  fi
+done
+defaults write com.apple.dock persistent-apps -array $persistent_apps
+defaults write com.apple.dock persistent-others -array \
+  "$(dock_folder "file:///Applications/" "Applications")" \
+  "$(dock_folder "file://$HOME/Documents/" "Documents")" \
+  "$(dock_folder "file://$HOME/Downloads/" "Downloads")"
 print_success "Dock configured"
 
-# Menu Bar settings
 print_step "Configuring Menu Bar..."
 defaults write NSGlobalDomain _HIHideMenuBar -bool true
 print_success "Menu Bar will auto-hide"
 
-# Restart Dock and Finder to apply changes
 print_step "Applying UI changes..."
-killall Dock
-killall Finder
+killall Dock Finder 2>/dev/null || true
 
 ###############################################################################
 # Final Steps & Manual To-Do List                                             #
@@ -521,56 +458,34 @@ print_header "Final Steps & Manual To-Do List ${STAR}"
 
 print_info "The following items need to be completed manually:"
 
-print_step "System Preferences:"
-echo "  ${ARROW} Sign in to Apple ID"
-echo "  ${ARROW} Configure Apple ID preferences"
-echo "  ${ARROW} Set up iCloud services"
+print_step "Bootstrap SSH key:"
+echo "  ${ARROW} 1Password → Settings → Developer → turn on 'Use the SSH agent'"
+echo "  ${ARROW} Then remove the pasted key from memory:  ssh-add -D"
+echo "  ${ARROW} iPhone: delete the note holding the key (and Recently Deleted)"
+
+print_step "System Settings:"
+echo "  ${ARROW} Sign in to Apple ID / iCloud services"
 echo "  ${ARROW} Configure Time Machine backup"
-echo "  ${ARROW} Set up Touch ID"
-echo "  ${ARROW} Configure Keyboard shortcuts"
-echo "  ${ARROW} Set up Hot Corners"
+echo "  ${ARROW} Set up Touch ID fingerprints"
+echo "  ${ARROW} Grant Accessibility / Screen Recording to yabai, skhd, sketchybar, Karabiner"
 echo "  ${ARROW} Confirm 8 Spaces/Desktops exist (yabai creates them when its scripting addition loads; otherwise Control + Up Arrow to add)"
+echo "  ${ARROW} Enable FileVault and the firewall"
 
 print_step "Applications:"
-echo "  ${ARROW} Sign in to 1Password"
-echo "  ${ARROW} Set up GPG keys"
-echo "  ${ARROW} Configure Git with GPG signing"
-echo "  ${ARROW} Set up SSH keys"
-echo "  ${ARROW} Sign in to browsers and set up sync"
-echo "  ${ARROW} Configure Karabiner-Elements"
+echo "  ${ARROW} Sign in to 1Password, browsers, Teams, Outlook"
+echo "  ${ARROW} Raycast: import settings with  open ~/.dotfiles/private/Raycast.rayconfig"
 echo "  ${ARROW} Set up Little Snitch rules"
-echo "  ${ARROW} Configure Raycast"
-echo "  ${ARROW} Move ~/.dotfiles/.config/Übersicht/widgets/flip-clock.widget to ~/Library/Application Support/Übersicht/widgets"
-echo "  ${ARROW} Install Private Internet Access (brew install --cask private-internet-access)"
-echo "  ${ARROW} Install Parallels (brew install --cask parallels)"
+echo "  ${ARROW} Install apps not in Homebrew or the App Store (see README)"
 
 print_step "sketchybar Theme System:"
-echo "  ${ARROW} Go to System Settings > Wallpaper"
-echo "  ${ARROW} Change wallpaper to ANY image (not default macOS wallpaper)"
+echo "  ${ARROW} System Settings > Wallpaper: change to ANY image (not the macOS default)"
 echo "  ${ARROW} Enable 'Show on all Spaces'"
-echo "  ${ARROW} Apply changes"
-echo "  ${WARN} This is REQUIRED for sketchybar theme switching to work with wallpapers"
-echo "  ${ARROW} Open Neovim (nvim) and wait for LazyVim to install plugins"
-echo "  ${ARROW} Quit Neovim (:q) after plugin installation completes"
-echo "  ${WARN} This is REQUIRED for Neovim theme switching to work with sketchybar"
+echo "  ${WARN} Required once for sketchybar theme switching to change wallpapers"
 
-print_step "Development Environment:"
-echo "  ${ARROW} Set up Python virtual environments"
-echo "  ${ARROW} Configure Node.js environment"
-echo "  ${ARROW} Set up Ruby gems"
-echo "  ${ARROW} Initialize Go workspace"
-
-print_step "Security:"
-echo "  ${ARROW} Enable FileVault"
-echo "  ${ARROW} Configure firewall settings"
-echo "  ${ARROW} Set up VPN configurations"
-echo "  ${ARROW} Review and adjust privacy settings"
-
-print_warning "Please complete these steps to finish setting up your system"
-
-# At the end of the script, before the final success message
-kill $CAFFEINATE_PID
+if [[ -d $backupdir ]]; then
+  print_warning "Files replaced by symlinks were backed up to $backupdir"
+fi
 
 print_header "Installation Complete! 🎉"
 print_success "Your development environment has been set up successfully"
-print_info "Please review the manual steps above to complete the configuration" 
+print_info "Please review the manual steps above to complete the configuration"
