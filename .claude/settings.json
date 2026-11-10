@@ -16,6 +16,9 @@
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh"
   },
+  "enabledPlugins": {
+    "obs-mgmt@danielrosehill": true
+  },
   "extraKnownMarketplaces": {
     "danielrosehill": {
       "source": {
@@ -31,7 +34,38 @@
   },
   "agentPushNotifEnabled": true,
   "voiceEnabled": true,
-  "enabledPlugins": {
-    "obs-mgmt@danielrosehill": true
+  "autoMode": {
+    "environment": [
+      "### Org-wide",
+      "**Organization**: None configured",
+      "**Cloud provider(s)**: Cloudflare (tunnel ingress); Dropbox (file storage integration referenced in CLAUDE.md)",
+      "**Repository visibility**: Private — matthewshammond/AeroPoint (confirmed via gh)",
+      "**Internal sharing / snippet hosting**: None configured — treat public paste/gist services as outside the trust boundary",
+      "**Secrets management**: .env file (gitignored) holds live credentials including Cloudflare tunnel token; Twilio, Postmark and Pushover credentials are blanked for test runs only",
+      "**Default / protected branches**: main (default); no branch protection rules listed via gh, and rulesets were not queryable — do not assume main is unprotected",
+      "**CI/CD deploy targets**: None configured — deploys are manual (git pull + docker compose up --build -d) on Atlas (demo.aeropoint.com) and a production VPS reached only via Tailscale SSH, instances ~/southern and ~/tva",
+      "**Network posture**: None configured",
+      "**Host containment**: None configured — assume Claude Code runs on an ordinary developer machine (Matt's Mac) with open internet",
+      "**Source control**: The trusted repo (matthewshammond/AeroPoint) and its origin remote (github.com:matthewshammond/AeroPoint.git) only",
+      "**Trusted internal domains**: aeropoint.com, demo.aeropoint.com, docs.aeropoint.com (DocuSeal)",
+      "**Trusted cloud buckets**: None configured",
+      "**Key internal services**: Atlas (Matt's home server, demo.aeropoint.com, /mnt/Docker/aeropoint/demo); production VPS via Tailscale SSH (~/southern, ~/tva instances)",
+      "**Internal package registry**: None configured",
+      "**Sensitive data locations & audiences**: .env (credentials, Cloudflare tunnel token); aeropoint/aeropoint_app/migrations/0006_userprofile_encrypted_aloft_token_and_more.py (encrypted Aloft token handling); customer flight/pilot data in the two per-instance databases (main DB and deconfliction DB) — share only with cleared AeroPoint staff (Matt)",
+      "**Data retention / declassification**: None configured",
+      "**Sensitive remote targets**: any host/namespace containing 'prod' or 'production' as a whole segment; the production VPS instances ~/southern and ~/tva (customer-live data, reached only via Tailscale SSH) should be treated with the same care even though not literally named 'prod'",
+      "**Protected deployment namespaces / environments**: None configured — fall back to the Sensitive remote targets heuristic; treat the production VPS (~/southern, ~/tva) and Atlas demo deploys as sensitive deploy targets requiring Matt's explicit go-ahead per CLAUDE.md",
+      "**Protected IaC scopes**: IAM, RBAC, networking, quota, and node-pool resources; anything whose name or tag carries 'prod' or 'production' as a whole word or name segment",
+      "### User-specific",
+      "**Primary use of Claude Code**: software development (Django/Docker flight-planning SaaS)",
+      "**Trusted repo**: matthewshammond/AeroPoint (private), working directory /Users/matthammond/projects/AeroPoint, remote origin github.com:matthewshammond/AeroPoint.git",
+      "**Org-specific CLIs**: None configured",
+      "routine under matthammond/ prefix: commands run from ~/projects/AeroPoint (Mac) or the instance folder on a server, per CLAUDE.md's Commands section"
+    ],
+    "soft_deny": [
+      "$defaults",
+      "Bash(docker compose up:*) in /Users/matthammond/projects/AeroPoint — CLAUDE.md states a bare `docker compose up` on Matt's Mac risks starting a second cloudflared tunnel that steals a live site's traffic; only `./scripts/test_local.sh` should start containers there",
+      "Bash(git commit --no-gpg-sign:*), Bash(git -c commit.gpgsign=false commit:*) — CLAUDE.md requires every commit be signed; never bypass signing to get past a failure"
+    ]
   }
 }
