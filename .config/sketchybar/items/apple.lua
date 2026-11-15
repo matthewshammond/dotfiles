@@ -267,8 +267,16 @@ local function show_theme_popup()
 	apple_popup.keep()
 end
 
-apple:subscribe("mouse.clicked", show_theme_popup)
-apple:subscribe("mouse.entered", show_theme_popup)
+-- Icon click toggles the menu open/closed (same as the OBS icon)
+apple:subscribe("mouse.clicked", function()
+	local q = apple:query()
+	if q and q.popup and q.popup.drawing == "on" then
+		apple_popup.hide_now()
+	else
+		show_theme_popup()
+	end
+end)
+-- Fires only once the mouse has left both the icon and its menu
 apple:subscribe("mouse.exited.global", apple_popup.hide_now)
 
 -- Subscribe to theme changes to update the apple icon
