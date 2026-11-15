@@ -69,9 +69,11 @@ for app in "${APPS[@]}"; do
 done
 sleep 2
 
-# 5. Back to Desktop 4 before the popup
-go_desktop4
+# 5. Restart yabai first, then land on Desktop 4
 /opt/homebrew/bin/yabai --restart-service
-sleep 1
+sleep 3
+go_desktop4
+sleep 2
+exit 0
 
 exit 0
