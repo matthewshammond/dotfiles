@@ -6,7 +6,11 @@ local theme = ThemeManager.get_current_theme()
 
 -- Equivalent to the --bar domain
 sbar.bar({
-	topmost = "window",
+	-- "on" = status window level, above the macOS menu bar. The menu bar is
+	-- auto-hidden and made invisible by yabai (menubar_opacity 0), but at
+	-- "window" level it still slides over the bar on hover: the first click
+	-- lands on the invisible menu bar, and popups miss mouse.exited.global.
+	topmost = "on",
 	display = "main",
 	height = theme.bar_config.height,
 	color = theme.colors.bar.bg,

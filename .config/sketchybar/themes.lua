@@ -373,7 +373,7 @@ function ThemeManager.apply_theme()
 
     -- Update bar configuration
     sbar.bar({
-        topmost = "window",
+        topmost = "on", -- above the auto-hidden macOS menu bar (see bar.lua)
         height = theme.bar_config.height,
         color = theme.colors.bar.bg,
         padding_right = 0,
