@@ -324,7 +324,6 @@ alias burpOFF="networksetup -setwebproxystate 'Wi-Fi' off && networksetup -setse
 alias speedtest='cloudflare-speed-cli' # Internet speed test
 
 # Serve the current folder on localhost only and open it. Ctrl-C stops it. usage: serve [port] (default 8000; 8080 is Burp)
-unalias serve 2>/dev/null
 function serve {
   local port="${1:-8000}"
   (sleep 0.5 && open "http://localhost:$port") &!
