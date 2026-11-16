@@ -147,36 +147,52 @@ alias lg='lazygit' # Opens lazygit in current directory
 
 # Git Private Commit - private files are linked straight from ~/.dotfiles/private,
 # so editing ~/.ssh/config (etc.) changes the private repo directly.
-# usage: gpc                 show what changed in private
+# usage: gpc                 uncommitted private changes: show them
+#                            already committed (e.g. by Claude): push them, then
+#                            record the new private commit in the public repo
 #        gpc "message"       commit + push all private changes, then record the
 #                            new private commit in the public repo
 #        gpc <file> "msg"    same, but only that file (path relative to ~)
 gpc () {
     local root="$HOME/.dotfiles" priv="$HOME/.dotfiles/private"
+    local msg="" file=""
 
     if [[ $# -eq 0 ]]; then
-        if [[ -z "$(git -C "$priv" status --porcelain)" ]]; then
-            print -P "%F{green}No private changes%f"
-        else
+        if [[ -n "$(git -C "$priv" status --porcelain)" ]]; then
             git -C "$priv" status --short
+            print -P "%F{yellow}Uncommitted private changes: gpc \"message\" to commit and push%f"
+            return 0
         fi
+    else
+        msg="${@[-1]}"
+        (( $# >= 2 )) && file="$1"
+        if [[ -n $file ]]; then
+            git -C "$priv" add -- "${${file#$HOME/}#\~/}" || return 1
+        else
+            git -C "$priv" add -A || return 1
+        fi
+        git -C "$priv" commit -m "$msg" || return 1
+    fi
+
+    local priv_ahead pointer_changed root_ahead
+    priv_ahead=$(git -C "$priv" rev-list --count @{u}..HEAD 2>/dev/null) || return 1
+    pointer_changed=$(git -C "$root" status --porcelain -- private)
+    root_ahead=$(git -C "$root" rev-list --count @{u}..HEAD 2>/dev/null) || return 1
+
+    if (( priv_ahead == 0 && root_ahead == 0 )) && [[ -z $pointer_changed ]]; then
+        print -P "%F{green}No private changes%f"
         return 0
     fi
 
-    local msg="${@[-1]}" file=""
-    (( $# >= 2 )) && file="$1"
-
-    if [[ -n $file ]]; then
-        git -C "$priv" add -- "${${file#$HOME/}#\~/}" || return 1
-    else
-        git -C "$priv" add -A || return 1
-    fi
-    git -C "$priv" commit -m "$msg" || return 1
-    git -C "$priv" push || return 1
+    # Push private first so the public repo never points at a missing commit
+    (( priv_ahead > 0 )) && { git -C "$priv" push || return 1; }
 
     # Record the new private commit in the public repo (only the pointer)
-    git -C "$root" add private
-    git -C "$root" commit -m "Update private submodule: $msg" -- private
+    if [[ -n $pointer_changed ]]; then
+        [[ -z $msg ]] && msg=$(git -C "$priv" log -1 --format=%s)
+        git -C "$root" add private
+        git -C "$root" commit -m "Update private submodule: $msg" -- private || return 1
+    fi
     git -C "$root" push
 }
 
