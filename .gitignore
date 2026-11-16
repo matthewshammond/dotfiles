@@ -17,3 +17,7 @@ __pycache__/
 
 # Karabiner rewrites these itself
 .config/karabiner/automatic_backups/
+
+# Claude Code user settings live in the private submodule (autoMode holds
+# private infrastructure details); see private/.claude/settings.json
+.claude/settings.json
