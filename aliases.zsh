@@ -321,8 +321,15 @@ alias burpON="networksetup -setwebproxy 'Wi-Fi' 127.0.0.1 8080 && networksetup -
 alias burpOFF="networksetup -setwebproxystate 'Wi-Fi' off && networksetup -setsecurewebproxystate 'Wi-Fi' off"
 
 # launch commands
-alias serve='nohup python3 -m http.server 80 &'
 alias speedtest='cloudflare-speed-cli' # Internet speed test
+
+# Serve the current folder on localhost only and open it. Ctrl-C stops it. usage: serve [port] (default 8000; 8080 is Burp)
+unalias serve 2>/dev/null
+function serve {
+  local port="${1:-8000}"
+  (sleep 0.5 && open "http://localhost:$port") &!
+  python3 -m http.server "$port" --bind 127.0.0.1
+}
 
 # Move matching files into same-named folders. usage: f2f [globs…] (default: common video types)
 f2f() {
