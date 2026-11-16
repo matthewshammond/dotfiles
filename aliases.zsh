@@ -256,11 +256,20 @@ alias gpgdd='gpgtar -d' # Decrypt directory
 # Looks up each container's current Docker IP on the server, then forwards
 #   localhost:<port>    -> aeropoint_db-<company>
 #   localhost:<port+1>  -> aeropoint_deconfliction-<company>
-# usage: pgtunnel <server> <company> [port]    e.g. pgtunnel atlas demo
+# usage: pgtunnel <server> <company> [port]
+#   <server>   Tailscale SSH host name of the server running the instance
+#   <company>  instance name, the suffix on the containers (aeropoint_db-<company>)
+#   [port]     local port for the main DB; deconfliction uses port+1 (default 5433)
+#   e.g. pgtunnel <tailscale-host> <instance>          -> localhost:5433 and 5434
+#        pgtunnel <tailscale-host> <instance> 5435     -> localhost:5435 and 5436
 pgtunnel() {
     if [[ -z $1 || -z $2 ]]; then
-        echo 'pgtunnel <server> <company> [port]    e.g. pgtunnel atlas demo'
-        echo '                                           pgtunnel aeropoint1 tva 5435'
+        echo 'usage: pgtunnel <server> <company> [port]'
+        echo '  <server>   Tailscale SSH host name of the server running the instance'
+        echo '  <company>  instance name, the suffix on the containers (aeropoint_db-<company>)'
+        echo '  [port]     local port for the main DB (default 5433)'
+        echo 'e.g. pgtunnel <tailscale-host> <instance>'
+        echo '     pgtunnel <tailscale-host> <instance> 5435   (to run a 2nd tunnel alongside)'
         echo '  main DB          -> localhost:<port>    (default 5433)'
         echo '  deconfliction DB -> localhost:<port+1>  (default 5434)'
         echo '  Ctrl+C closes the tunnel'
