@@ -32,14 +32,9 @@ cmd + shift - k : yabai -m window --focus "$(yabai -m query --windows --space | 
 # Hyper + ; to restore minimized front window
 hyper - 0x29 : osascript ~/.dotfiles/scripts/restore_minimized_window.applescript
 
-# fn+m toggles between sketchybar and the macOS menu bar: only one is usable
-# at a time. Sketchybar sits above the menu bar (topmost=on) so its clicks
-# work; while the menu bar is in use, sketchybar is hidden.
-fn - m : if sketchybar --query bar | grep -q '"hidden": "off"'; then \
-           yabai -m config menubar_opacity 1.0; sketchybar --bar hidden=on; \
-         else \
-           yabai -m config menubar_opacity 0.0; sketchybar --bar hidden=off; \
-         fi
+# fn+m toggles between sketchybar and the macOS menu bar so one is always
+# showing (see scripts/menubar_toggle.sh)
+fn - m : ~/.dotfiles/scripts/menubar_toggle.sh
 
 # toggle window split type
 alt - e : yabai -m window --toggle split
