@@ -33,8 +33,10 @@ cmd + shift - k : yabai -m window --focus "$(yabai -m query --windows --space | 
 hyper - 0x29 : osascript ~/.dotfiles/scripts/restore_minimized_window.applescript
 
 # toggle menu bar opacity
-fn - n: yabai -m config menubar_opacity 0.0
-fn - m: yabai -m config menubar_opacity 1.0
+# Sketchybar sits above the menu bar (topmost=on) so clicks reach it. When the
+# menu bar is unlocked, drop sketchybar below it so the menu bar is usable.
+fn - n: yabai -m config menubar_opacity 0.0; sketchybar --bar topmost=on
+fn - m: yabai -m config menubar_opacity 1.0; sketchybar --bar topmost=window
 
 # toggle window split type
 alt - e : yabai -m window --toggle split
