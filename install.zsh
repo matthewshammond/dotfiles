@@ -119,6 +119,9 @@ setup_private() {
   # 'git push' in ~/.dotfiles pushes private first when needed, so the public
   # repo never points at a private commit that isn't on GitHub yet
   git -C "$dotfiledir" config push.recurseSubmodules on-demand
+  # pre-commit hook blocks private info (terms listed in the private repo)
+  # from being committed to this public repo
+  git -C "$dotfiledir" config core.hooksPath scripts/git-hooks
   print_success "Private repo ready"
 }
 
