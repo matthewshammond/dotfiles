@@ -141,6 +141,7 @@ cask "blackhole-2ch"                                   # Virtual audio driver
 cask "displaylink"                                     # DisplayLink driver (Prompter XL monitor)
 cask "elgato-camera-hub"                               # Elgato camera hub (Prompter XL)
 cask "karabiner-elements"                              # Keyboard remapping
+cask "markdown-preview"                                # Markdown previewer (bundled Quick Look extension)
 cask "parallels"                                       # Virtual machines
 cask "qlmarkdown"                                      # Quick Look for Markdown
 cask "sf-symbols"                                      # Apple SF Symbols (sketchybar icons)
