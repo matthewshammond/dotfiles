@@ -65,6 +65,18 @@ else
   print_warning "Re-run just the packages later with: brew bundle --file=$brewfile"
 fi
 
+# Markdown Preview's Quick Look extension stays off until the app has run once,
+# so space-bar previews of .md files show a generic icon until this is done
+if [[ -d "/Applications/Markdown Preview.app" ]]; then
+  print_step "Enabling Markdown Preview's Quick Look extension..."
+  open -g -a "Markdown Preview"
+  sleep 3
+  pluginkit -e use -i doc.md-preview.quick-look
+  qlmanage -r >/dev/null 2>&1
+  osascript -e 'quit app "Markdown Preview"' 2>/dev/null || true
+  print_success "Markdown Quick Look previews enabled"
+fi
+
 ###############################################################################
 # Python - pyenv provides the interpreter that virtualenvs are built from.    #
 # Nothing is pip-installed globally; projects use pyenv-virtualenv venvs.    #
